@@ -46,8 +46,7 @@ func InitConfig() (*viper.Viper, error) {
 		fmt.Printf("Configuration could not be read from config file. Using env variables instead")
 	}
 
-	// Prioritize `config.yaml log level` over `CLI_LOG_LEVEL`
-	// Only on this case, if we want 
+	// Prioritize `config.yaml log level` over `CLI_LOG_LEVEL on docker-compose`
 	if !v.IsSet("log.level") {  
 		v.BindEnv("log.level")
 	}
