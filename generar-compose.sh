@@ -1,3 +1,5 @@
+#!/bin/bash#
+
 # Verificar parámetros
 if [ "$#" -ne 2 ]; then
     echo "Uso: $0 <archivo_salida> <cantidad_clientes>"
