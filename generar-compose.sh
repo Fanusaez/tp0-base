@@ -1,4 +1,4 @@
-#!/bin/bash#
+#!/bin/bash
 
 # Verificar parámetros
 if [ "$#" -ne 2 ]; then
@@ -10,4 +10,4 @@ ARCHIVO_SALIDA=$1
 CANT_CLIENTES=$2
 
 # Llamar al script en Python
-python3 generar-compose.py "$ARCHIVO_SALIDA" "$CANT_CLIENTES"
+python3 mi_generador.py "$ARCHIVO_SALIDA" "$CANT_CLIENTES"
