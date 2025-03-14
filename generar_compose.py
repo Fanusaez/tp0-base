@@ -28,7 +28,6 @@ def generar_compose(archivo_salida, cantidad_clientes):
             f.write("      - ./client/config.yaml:/config.yaml\n")
             f.write("    environment:\n")
             f.write(f"      - CLI_ID={i}\n")
-            f.write("      - CLI_LOG_LEVEL=DEBUG\n")
             f.write("    networks:\n")
             f.write("      - testing_net\n")
             f.write("    depends_on:\n")
