@@ -47,4 +47,3 @@ if __name__ == "__main__":
     cantidad_clientes = sys.argv[2]
 
     generar_compose(archivo_salida, cantidad_clientes)
-    print(f"Archivo {archivo_salida} generado con {cantidad_clientes} clientes.")
