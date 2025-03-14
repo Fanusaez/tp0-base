@@ -36,7 +36,6 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("server", "address")
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
-	v.BindEnv("log", "level")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -45,6 +44,12 @@ func InitConfig() (*viper.Viper, error) {
 	v.SetConfigFile("./config.yaml")
 	if err := v.ReadInConfig(); err != nil {
 		fmt.Printf("Configuration could not be read from config file. Using env variables instead")
+	}
+
+	// Prioritize `config.yaml log level` over `CLI_LOG_LEVEL`
+	// Only on this case, if we want 
+	if !v.IsSet("log.level") {  
+		v.BindEnv("log.level")
 	}
 
 	// Parse time.Duration variables and return an error if those variables cannot be parsed
