@@ -8,6 +8,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self._client_socket = None
 
     def run(self):
         """
@@ -21,8 +22,8 @@ class Server:
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
         while True:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+            self.client_socket = self.__accept_new_connection()
+            self.__handle_client_connection(self.client_socket)
 
     def __handle_client_connection(self, client_sock):
         """
@@ -41,6 +42,7 @@ class Server:
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
+            # Close client socket after exchanging messages
             client_sock.close()
 
     def __accept_new_connection(self):
@@ -56,3 +58,20 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return c
+
+    def shutdown(self):
+        """
+        Shutdown server socket
+
+        Method to close server socket and client socket if posible
+        """
+        try:
+            self.client_socket.close()
+            logging.info("action: shutdown | result: success")
+        except OSError as e:
+            logging.error("action: shutdown | result: fail | error: {e}")
+        finally:
+            self._server_socket.close()
+            logging.info("Server has been shutdown")
+
+        
