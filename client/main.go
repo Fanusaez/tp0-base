@@ -120,13 +120,15 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM)
 
+	client := common.NewClient(clientConfig)
+	client.StartClientLoop()
+
 	// Go rutine para capturar SIGTERM
 	go func() {
 		<-sigChan
 		log.Infof("Recibido SIGTERM. Cerrando cliente de manera controlada...")
+		client.Close()
 		os.Exit(0)
 	}()
 
-	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
 }
