@@ -20,7 +20,7 @@ fi
 
 # Ejecutar un contenedor temporal en la red de Docker para probar la conexión con netcat
 RESPUESTA=$(docker run --rm --network "$NOMBRE_RED" busybox sh -c \
-    "echo '$MENSAJE' | nc $TIEMPO_ESPERA $SERVER_NAME $SERVER_PORT")
+    "echo '$MENSAJE' | nc $SERVER_NAME $SERVER_PORT")
 
 # Verificar si la respuesta es igual al mensaje enviado
 if [ "$RESPUESTA" = "$MENSAJE" ]; then
