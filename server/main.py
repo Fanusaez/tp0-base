@@ -9,9 +9,9 @@ import signal
 from functools import partial
 
 
-def handle_sigterm(signum, frame, server):
+def handle_sigterm(server_instance, signum, frame):
     logging.info("Recibido SIGTERM. Cerrando servidor de manera controlada...")
-    server.shutdown()  # Método para cerrar conexiones y liberar recursos
+    server_instance.shutdown()  # Método para cerrar conexiones y liberar recursos
     sys.exit(0)
 
 
@@ -60,7 +60,7 @@ def main():
     # Initialize server and start server loop
     server = Server(port, listen_backlog)
 
-     # Pasar el server a la función usando functools.partial
+    # Pasar el server a la función usando functools.partial
     signal.signal(signal.SIGTERM, partial(handle_sigterm, server))
     
     server.run()
