@@ -66,7 +66,8 @@ class Server:
         Method to close server socket and client socket if posible
         """
         try:
-            self.client_socket.close()
+            if self.client_socket:
+                self.client_socket.close()
             logging.info("action: shutdown | result: success")
         except OSError as e:
             logging.error("action: shutdown | result: fail | error: {e}")
