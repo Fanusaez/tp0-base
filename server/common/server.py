@@ -39,6 +39,7 @@ class Server:
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
             # TODO: Modify the send to avoid short-writes
             client_sock.send("{}\n".format(msg).encode('utf-8'))
+            
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
@@ -46,18 +47,17 @@ class Server:
             client_sock.close()
 
     def __accept_new_connection(self):
+        """ 
+        Accept new connections with proper error handling 
         """
-        Accept new connections
-
-        Function blocks until a connection to a client is made.
-        Then connection created is printed and returned
-        """
-
-        # Connection arrived
         logging.info('action: accept_connections | result: in_progress')
-        c, addr = self._server_socket.accept()
-        logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        try:
+            c, addr = self._server_socket.accept()
+            logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
+            return c
+        except OSError as e:
+            logging.error(f"action: accept_connections | result: fail | error: {e}")
+            return None  # Retorna None si el socket se cerró
 
     def shutdown(self):
         """
@@ -70,7 +70,7 @@ class Server:
                 self.client_socket.close()
             logging.info("action: shutdown | result: success")
         except OSError as e:
-            logging.error("action: shutdown | result: fail | error: {e}")
+            logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
             self._server_socket.close()
             logging.info("Server has been shutdown")
