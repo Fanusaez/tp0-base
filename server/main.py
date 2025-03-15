@@ -4,6 +4,15 @@ from configparser import ConfigParser
 from common.server import Server
 import logging
 import os
+import sys
+import signal
+from functools import partial
+
+
+def handle_sigterm(signum, frame, server):
+    logging.info("Recibido SIGTERM. Cerrando servidor de manera controlada...")
+    server.shutdown()  # Método para cerrar conexiones y liberar recursos
+    sys.exit(0)
 
 
 def initialize_config():
@@ -50,6 +59,10 @@ def main():
 
     # Initialize server and start server loop
     server = Server(port, listen_backlog)
+
+     # Pasar el server a la función usando functools.partial
+    signal.signal(signal.SIGTERM, partial(handle_sigterm, server))
+    
     server.run()
 
 def initialize_log(logging_level):

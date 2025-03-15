@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"time"
+	"os/signal"
+	"syscall"
 
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"
@@ -113,6 +115,16 @@ func main() {
 		LoopAmount:    v.GetInt("loop.amount"),
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
+
+	// Capturar SIGTERM
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM)
+
+	// Go rutine para capturar SIGTERM
+	go func() {
+		<-sigChan
+		os.Exit(0)
+	}()
 
 	client := common.NewClient(clientConfig)
 	client.StartClientLoop()
