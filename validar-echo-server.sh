@@ -3,7 +3,7 @@
 # Obtener el nombre de la red desde docker-compose
 NOMBRE_RED=$(docker network ls --format "{{.Name}}" | grep testing_net)
 SERVER_NAME="server"
-SERVER_PORT=$(docker exec "$SERVER_NAME" sh -c "awk -F '=' '/SERVER_PORT/ {print \$2}' /config.ini | tr -d ' '")
+SERVER_PORT=$(grep 'SERVER_PORT' ./server/config.ini | cut -d '=' -f2 | tr -d ' ')
 MENSAJE="TestMessage123"
 
 # Verificar si la red existe
