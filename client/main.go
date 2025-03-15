@@ -123,6 +123,7 @@ func main() {
 	// Go rutine para capturar SIGTERM
 	go func() {
 		<-sigChan
+		log.Infof("Recibido SIGTERM. Cerrando cliente de manera controlada...")
 		os.Exit(0)
 	}()
 
