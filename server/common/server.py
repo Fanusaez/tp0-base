@@ -59,7 +59,6 @@ class Server:
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
             return c
         except OSError as e:
-            logging.error(f"action: accept_connections | result: fail | error: {e}")
             return None  # Retorna None si el socket se cerró
 
     def shutdown(self):
