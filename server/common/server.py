@@ -9,6 +9,7 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._client_socket = None
+        self.running = True
 
     def run(self):
         """
@@ -21,9 +22,11 @@ class Server:
 
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
-        while True:
-            self.client_socket = self.__accept_new_connection()
-            self.__handle_client_connection(self.client_socket)
+        while self.running:
+            client_socket = self.__accept_new_connection()
+            if client_socket:
+                self.client_socket = client_socket
+                self.__handle_client_connection(self.client_socket)
 
     def __handle_client_connection(self, client_sock):
         """
@@ -65,6 +68,7 @@ class Server:
 
         Method to close server socket and client socket if posible
         """
+        self.running = False
         try:
             if self.client_socket:
                 self.client_socket.close()
