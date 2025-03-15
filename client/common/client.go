@@ -60,15 +60,13 @@ func (c *Client) StartClientLoop() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM)
 
-	// Go rutine para capturar SIGTERM
+	// Goroutine para manejar SIGTERM
 	go func() {
 		<-sigChan
 		log.Infof("Recibido SIGTERM. Cerrando cliente de manera controlada...")
 		c.Close()
-		close(sigChan)
-		os.Exit(0)
+		os.Exit(0)  // Salida controlada
 	}()
-
 
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
@@ -106,8 +104,11 @@ func (c *Client) StartClientLoop() {
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 }
 
+// Close cierra la conexión del cliente de forma segura
 func (c *Client) Close() {
 	if c.conn != nil {
+		log.Infof("Cerrando conexión del cliente...")
 		c.conn.Close()
+		c.conn = nil
 	}
 }
