@@ -1,6 +1,7 @@
 import socket
 import logging
-
+import struct
+from common.utils import *
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -35,14 +36,16 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
+            bet = self.__recive_bet(client_sock)
             addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+            store_bets([bet])
+            logging.info(f"action: apuesta_almacenada | result: success | dni: ${bet.document} | numero: ${bet.number}")
             
+            # TODO: Modify the send to avoid short-writes
+            # TODO: Send confirmation message to the client
+            # client_sock.send("{}\n".format(msg).encode('utf-8'))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
@@ -60,6 +63,26 @@ class Server:
             return c
         except OSError as e:
             return None  # Retorna None si el socket se cerró
+        
+    def __read_field(self, sock):
+        length_data = sock.recv(2)  # Leer los primeros 2 bytes (longitud)
+        if not length_data:
+            return None
+
+        length = struct.unpack("!H", length_data)[0]  # Desempacar como entero (Big Endian)
+        data = sock.recv(length).decode("utf-8")  # Leer los bytes del campo y decodificarlos
+        return data
+
+    def __recive_bet(self, client_sock):
+        bet = Bet(
+            agency = int(self.__read_field(client_sock)),
+            first_name =  self.__read_field(client_sock),
+            last_name = self.__read_field(client_sock),
+            document = self.__read_field(client_sock),
+            birthdate = self.__read_field(client_sock),
+            number = int(self.__read_field(client_sock)),
+        )
+        return bet
 
     def shutdown(self):
         """

@@ -23,6 +23,13 @@ var log = logging.MustGetLogger("log")
 func InitConfig() (*viper.Viper, error) {
 	v := viper.New()
 
+	// Add env variables of lottery agency
+	v.BindEnv("nombre")
+	v.BindEnv("apellido")
+	v.BindEnv("documento")
+	v.BindEnv("nacimiento")
+	v.BindEnv("numero")
+
 	// Configure viper to read env variables with the CLI_ prefix
 	v.AutomaticEnv()
 	v.SetEnvPrefix("cli")
@@ -47,7 +54,7 @@ func InitConfig() (*viper.Viper, error) {
 	}
 
 	// Prioritize `config.yaml log level` over `CLI_LOG_LEVEL on docker-compose`
-	if !v.IsSet("log.level") {  
+	if !v.IsSet("log.level") {
 		v.BindEnv("log.level")
 	}
 
@@ -92,6 +99,15 @@ func PrintConfig(v *viper.Viper) {
 		v.GetDuration("loop.period"),
 		v.GetString("log.level"),
 	)
+
+	// logueamos para saber que se cargaron bien
+	log.Infof("action: config | result: success | nombre: %s | apellido: %s | dni: %v | nacimiento: %v | numero: %s",
+		v.GetString("nombre"),
+		v.GetString("apellido"),
+		v.GetInt("documento"),
+		v.GetTime("nacimiento"),
+		v.GetString("numero"),
+	)
 }
 
 func main() {
@@ -114,6 +130,15 @@ func main() {
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
-	client := common.NewClient(clientConfig)
+	clientBet := common.Bet{
+		Id: v.GetString("id"),
+		Nombre: v.GetString("nombre"),
+		Apellido: v.GetString("apellido"),
+		Documento: v.GetString("documento"),
+		Nacimiento: v.GetString("nacimiento"),
+		Numero: v.GetString("numero"),
+	}
+
+	client := common.NewClient(clientConfig, clientBet)
 	client.StartClientLoop()
 }

@@ -1,13 +1,13 @@
 package common
 
 import (
-	"bufio"
-	"fmt"
 	"net"
 	"time"
 	"os/signal"
 	"os"
 	"syscall"
+	"bytes"
+	"encoding/binary"
 
 	"github.com/op/go-logging"
 )
@@ -22,17 +22,29 @@ type ClientConfig struct {
 	LoopPeriod    time.Duration
 }
 
+// Bet info
+type Bet struct {
+	Id string
+	Nombre string
+	Apellido string
+	Documento string
+	Nacimiento string
+	Numero string
+} 
+
 // Client Entity that encapsulates how
 type Client struct {
 	config ClientConfig
+	bet Bet
 	conn   net.Conn
 }
 
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
-func NewClient(config ClientConfig) *Client {
+func NewClient(config ClientConfig, bet Bet) *Client {
 	client := &Client{
 		config: config,
+		bet: bet,
 	}
 	return client
 }
@@ -68,40 +80,55 @@ func (c *Client) StartClientLoop() {
 		os.Exit(0)  // Salida controlada
 	}()
 
-	// There is an autoincremental msgID to identify every message sent
-	// Messages if the message amount threshold has not been surpassed
-	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
-		// Create the connection the server in every loop iteration. Send an
-		c.createClientSocket()
+	c.createClientSocket()
 
-		// TODO: Modify the send to avoid short-write
-		fmt.Fprintf(
-			c.conn,
-			"[CLIENT %v] Message N°%v\n",
+	// Serialize the bet
+	var data []byte = SerialiceBet(c.bet)
+	
+	// Send the bet
+	err := c.SendAll(data)
+	if err != nil {
+		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
-			msgID,
+			err,
 		)
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		c.conn.Close()
-
-		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-				c.config.ID,
-				err,
-			)
-			return
-		}
-
-		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
-			c.config.ID,
-			msg,
-		)
-
-		// Wait a time between sending one message and the next one
-		time.Sleep(c.config.LoopPeriod)
-
+		return
 	}
-	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+
+	// TODO: Receive the response from the server
+	// 
+
+	c.conn.Close()
+
+	/*
+	if err != nil {
+		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return
+	}
+	*/
+	
+	// Log the success
+	log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
+		c.bet.Documento,
+		c.bet.Numero,
+	)
+}
+
+// Sends a message to the server
+func (c *Client) SendAll(data []byte) error {
+	totalSent := 0
+	for totalSent < len(data) {
+		sent, err := c.conn.Write(data[totalSent:])
+		if err != nil {
+			log.Errorf("Error al enviar la apuesta: %v", err)
+			return err
+		}
+		totalSent += sent
+	}
+	return nil
 }
 
 // Close cierra la conexión del cliente de forma segura
@@ -111,4 +138,26 @@ func (c *Client) Close() {
 		c.conn.Close()
 		c.conn = nil
 	}
+}
+
+func SerialiceBet(bet Bet) []byte {
+	buffer := new(bytes.Buffer)
+
+	// Aux function to write a field in the buffer
+	writeField := func(data string) {
+		// Write the length of the data (2 bytes representation)
+		binary.Write(buffer, binary.BigEndian, uint16(len(data))) 
+		// Write the data
+		buffer.WriteString(data)                                 
+	}
+
+	// Write the fields
+	writeField(bet.Id)
+	writeField(bet.Nombre)
+	writeField(bet.Apellido)
+	writeField(bet.Documento)
+	writeField(bet.Nacimiento)
+	writeField(bet.Numero)
+
+	return buffer.Bytes()
 }
