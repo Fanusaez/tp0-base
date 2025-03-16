@@ -80,41 +80,44 @@ func (c *Client) StartClientLoop() {
 		os.Exit(0)  // Salida controlada
 	}()
 
-	c.createClientSocket()
+	// hacer el loop
+	for i := 0; i < c.config.LoopAmount; i++ {
+		c.createClientSocket()
 
-	// Serialize the bet
-	var data []byte = SerialiceBet(c.bet)
-	
-	// Send the bet
-	err := c.SendAll(data)
-	if err != nil {
-		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
+		// Serialize the bet
+		var data []byte = SerialiceBet(c.bet)
+		
+		// Send the bet
+		err := c.SendAll(data)
+		if err != nil {
+			log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
+				c.config.ID,
+				err,
+			)
+			return
+		}
+
+		// TODO: Receive the response from the server
+		// 
+
+		c.conn.Close()
+
+		/*
+		if err != nil {
+			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+				c.config.ID,
+				err,
+			)
+			return
+		}
+		*/
+		
+		// Log the success
+		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
+			c.bet.Documento,
+			c.bet.Numero,
 		)
-		return
 	}
-
-	// TODO: Receive the response from the server
-	// 
-
-	c.conn.Close()
-
-	/*
-	if err != nil {
-		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
-		return
-	}
-	*/
-	
-	// Log the success
-	log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
-		c.bet.Documento,
-		c.bet.Numero,
-	)
 }
 
 // Sends a message to the server
