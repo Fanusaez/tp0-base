@@ -41,7 +41,7 @@ class Server:
             bet = self.__recive_bet(client_sock)
             addr = client_sock.getpeername()
             store_bets([bet])
-            logging.info(f"action: apuesta_almacenada | result: success | dni: ${bet.document} | numero: ${bet.number}")
+            logging.info(f"action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}")
             
             # TODO: Modify the send to avoid short-writes
             # TODO: Send confirmation message to the client
