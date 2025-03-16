@@ -53,6 +53,11 @@ func InitConfig() (*viper.Viper, error) {
 		fmt.Printf("Configuration could not be read from config file. Using env variables instead")
 	}
 
+	// Prioritize `config.yaml log level` over `CLI_LOG_LEVEL on docker-compose`
+	if !v.IsSet("log.level") {
+		v.BindEnv("log.level")
+	}
+
 	// Parse time.Duration variables and return an error if those variables cannot be parsed
 
 	if _, err := time.ParseDuration(v.GetString("loop.period")); err != nil {
