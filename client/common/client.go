@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"bytes"
 	"encoding/binary"
+	"io"
 
 	"github.com/op/go-logging"
 )
@@ -77,7 +78,8 @@ func (c *Client) StartClientLoop() {
 		<-sigChan
 		log.Infof("Recibido SIGTERM. Cerrando cliente de manera controlada...")
 		c.Close()
-		os.Exit(0)  // Salida controlada
+		close(sigChan)
+		os.Exit(0)
 	}()
 
 	// hacer el loop
@@ -97,12 +99,9 @@ func (c *Client) StartClientLoop() {
 			return
 		}
 
-		// TODO: Receive the response from the server
-		// 
-
-		c.conn.Close()
-
-		/*
+		// Receive ACK from server (4 bytes "ACK\n")  
+		buffer := make([]byte, 4)
+		_, err = io.ReadFull(c.conn, buffer)
 		if err != nil {
 			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 				c.config.ID,
@@ -110,7 +109,8 @@ func (c *Client) StartClientLoop() {
 			)
 			return
 		}
-		*/
+
+		c.conn.Close()
 		
 		// Log the success
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
@@ -134,20 +134,34 @@ func (c *Client) SendAll(data []byte) error {
 	return nil
 }
 
-// Close cierra la conexión del cliente de forma segura
-func (c *Client) Close() {
-	if c.conn != nil {
-		log.Infof("Cerrando conexión del cliente...")
-		c.conn.Close()
-		c.conn = nil
+func (c *Client) ReciveAll(lenData int) ([]byte, error) {
+	buffer := make([]byte, lenData)
+	totalReceived := 0
+
+	for totalReceived < lenData {
+		n, err := c.conn.Read(buffer[totalReceived:])
+		if err != nil {
+			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+				c.config.ID,
+				err,
+			)
+			return nil, err
+		}
+		totalReceived += n
 	}
+
+	return buffer, nil
 }
 
+// SerialiceBet Serializes a bet into a byte array
 func SerialiceBet(bet Bet) []byte {
 	buffer := new(bytes.Buffer)
 
 	// Aux function to write a field in the buffer
 	writeField := func(data string) {
+		if data == "" {
+			data = " " // Avoid sending empty strings
+		}
 		// Write the length of the data (2 bytes representation)
 		binary.Write(buffer, binary.BigEndian, uint16(len(data))) 
 		// Write the data
@@ -163,4 +177,13 @@ func SerialiceBet(bet Bet) []byte {
 	writeField(bet.Numero)
 
 	return buffer.Bytes()
+}
+
+// Close cierra la conexión del cliente de forma segura
+func (c *Client) Close() {
+	if c.conn != nil {
+		log.Infof("Cerrando conexión del cliente...")
+		c.conn.Close()
+		c.conn = nil
+	}
 }
