@@ -1,5 +1,4 @@
 
-import struct
 from common.utils import *
 
 
@@ -21,8 +20,10 @@ def read_field(sock):
         if not length_data:
             return None
 
-        length = struct.unpack("!H", length_data)[0]  # Desempacar como entero (Big Endian)
-        data = recive_all(sock, length).decode("utf-8")  # Leer los bytes del campo y decodificarlos
+        # Convert 2 bytes to integer
+        bytes_to_read = (length_data[0] << 8) | length_data[1]
+
+        data = recive_all(sock, bytes_to_read).decode("utf-8")
         return data
 
 def recive_all(client_socket, bytes_to_receive):
