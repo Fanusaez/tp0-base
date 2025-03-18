@@ -2,6 +2,7 @@ import socket
 import logging
 import struct
 from common.utils import *
+from common.deserialize import *
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -36,9 +37,8 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
-
         try:
-            bet = self.__recive_bet(client_sock)
+            bet = recive_bet(client_sock)
             #addr = client_sock.getpeername()
             store_bets([bet])
             logging.info(f"action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}")
@@ -62,40 +62,7 @@ class Server:
             return c
         except OSError as e:
             return None  # Retorna None si el socket se cerró
-        
-    def __read_field(self, sock):
-        """Reads 2 bytes from socket indicating the length of the field and then reads the field"""
-        length_data = self.__recive_all(sock, 2)  # Leer los primeros 2 bytes (longitud)
-        if not length_data:
-            return None
-
-        length = struct.unpack("!H", length_data)[0]  # Desempacar como entero (Big Endian)
-        data = self.__recive_all(sock, length).decode("utf-8")  # Leer los bytes del campo y decodificarlos
-        return data
     
-    def __recive_all(self, client_socket, bytes_to_receive):
-        """Reads exactly bytes_to_receive bytes from client_socket"""
-        data = b""
-        while len(data) < bytes_to_receive:
-            packet = client_socket.recv(bytes_to_receive - len(data))
-            if not packet:
-                return None
-            data += packet
-        return data
-
-
-    def __recive_bet(self, client_sock):
-        """Reads a bet from a client socket and creates a Bet object"""
-        bet = Bet(
-            agency = int(self.__read_field(client_sock)),
-            first_name =  self.__read_field(client_sock),
-            last_name = self.__read_field(client_sock),
-            document = self.__read_field(client_sock),
-            birthdate = self.__read_field(client_sock),
-            number = int(self.__read_field(client_sock)),
-        )
-        return bet
-
     def shutdown(self):
         """
         Shutdown server socket

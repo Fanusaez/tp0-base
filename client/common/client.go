@@ -6,9 +6,6 @@ import (
 	"os/signal"
 	"os"
 	"syscall"
-	"bytes"
-	"encoding/binary"
-	"io"
 
 	"github.com/op/go-logging"
 )
@@ -82,15 +79,14 @@ func (c *Client) StartClientLoop() {
 		os.Exit(0)
 	}()
 
-	// hacer el loop
 	for i := 0; i < c.config.LoopAmount; i++ {
 		c.createClientSocket()
 
 		// Serialize the bet
-		var data []byte = SerialiceBet(c.bet)
+		var data []byte = serialiceBet(c.bet)
 		
 		// Send the bet
-		err := c.SendAll(data)
+		err := c.sendAll(data)
 		if err != nil {
 			log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 				c.config.ID,
@@ -100,16 +96,9 @@ func (c *Client) StartClientLoop() {
 		}
 
 		// Receive ACK from server (4 bytes "ACK\n")  
-		buffer := make([]byte, 4)
-		_, err = io.ReadFull(c.conn, buffer)
-		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-				c.config.ID,
-				err,
-			)
-			return
-		}
+		c.reciveAck()
 
+		// Close the connection
 		c.conn.Close()
 		
 		// Log the success
@@ -121,7 +110,7 @@ func (c *Client) StartClientLoop() {
 }
 
 // Sends a message to the server
-func (c *Client) SendAll(data []byte) error {
+func (c *Client) sendAll(data []byte) error {
 	totalSent := 0
 	for totalSent < len(data) {
 		sent, err := c.conn.Write(data[totalSent:])
@@ -133,8 +122,8 @@ func (c *Client) SendAll(data []byte) error {
 	}
 	return nil
 }
-
-func (c *Client) ReciveAll(lenData int) ([]byte, error) {
+// Recive lenData bytes from the server
+func (c *Client) reciveAll(lenData int) ([]byte, error) {
 	buffer := make([]byte, lenData)
 	totalReceived := 0
 
@@ -153,30 +142,23 @@ func (c *Client) ReciveAll(lenData int) ([]byte, error) {
 	return buffer, nil
 }
 
-// SerialiceBet Serializes a bet into a byte array
-func SerialiceBet(bet Bet) []byte {
-	buffer := new(bytes.Buffer)
-
-	// Aux function to write a field in the buffer
-	writeField := func(data string) {
-		if data == "" {
-			data = " " // Avoid sending empty strings
-		}
-		// Write the length of the data (2 bytes representation)
-		binary.Write(buffer, binary.BigEndian, uint16(len(data))) 
-		// Write the data
-		buffer.WriteString(data)                                 
+func (c* Client) reciveAck() {
+	// Receive ACK from server (4 bytes "ACK\n")  
+	ack, err := c.reciveAll(4)
+	if err != nil {
+		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return
 	}
-
-	// Write the fields
-	writeField(bet.Id)
-	writeField(bet.Nombre)
-	writeField(bet.Apellido)
-	writeField(bet.Documento)
-	writeField(bet.Nacimiento)
-	writeField(bet.Numero)
-
-	return buffer.Bytes()
+	
+	if string(ack) != "ACK\n" {
+		log.Errorf("action: receive_message | result: fail | client_id: %v | error: invalid ack",
+			c.config.ID,
+		)
+		return
+	}
 }
 
 // Close cierra la conexión del cliente de forma segura
