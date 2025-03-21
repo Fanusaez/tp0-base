@@ -22,8 +22,6 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while self.running:
             client_socket = self.__accept_new_connection()
             if client_socket:
@@ -39,19 +37,21 @@ class Server:
             while True:
                 bets, success = receive_batch(client_sock)
 
-                # Cliente cerró la conexión (None) o no llegó ningún batch
+                # No more batchs, exit loop
                 if bets is None and success:
-                    # Se quedo sin batchs
                     logging.info(f"action: exit | result: success")
                     break
-
+                
+                # Batch received
                 elif success:
                     logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
                     # for bet in bets:
                     #     store_bet(bet)
+
+                    # Send Ack
                     client_sock.sendall("ACK\n".encode("utf-8"))
                 else:
-                    logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
+                    logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
                     break
 
         except OSError as e:
