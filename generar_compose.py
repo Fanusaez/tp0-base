@@ -26,7 +26,7 @@ def generar_compose(archivo_salida, cantidad_clientes):
             f.write("    entrypoint: /client\n")
             f.write("    volumes:\n")
             f.write("      - ./client/config.yaml:/config.yaml\n")
-            f.write("      - ./.data/agency-{}.csv:/data/agency.csv\n")
+            f.write(f"      - ./.data/agency-{i}.csv:/data/agency.csv\n")
             f.write("    environment:\n")
             f.write(f"       - CLI_ID={i}\n")
             f.write("       - CLI_LOG_LEVEL=DEBUG\n")
