@@ -49,12 +49,13 @@ class Server:
                     # for bet in bets:
                     #     store_bet(bet)
                     client_sock.sendall("ACK\n".encode("utf-8"))
+                    break
                 else:
-                    logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
+                    logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
                     break
 
         except OSError as e:
-            logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
+            logging.info(f"action: receive_message | result: success | cantidad: {len(bets)}")
         finally:
             client_sock.close()
 

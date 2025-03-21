@@ -115,7 +115,7 @@ func serializeBatch(batch []Bet) []byte {
 
 	// Escribir un campo individual
 	writeField := func(data string, buffer *bytes.Buffer) {
-		binary.Write(buffer, binary.BigEndian, uint16(len(data))) // ✅ Escribir en el buffer recibido
+		binary.Write(buffer, binary.BigEndian, uint16(len(data)))
 		buffer.WriteString(data)
 	}
 
@@ -144,6 +144,7 @@ func serializeBatch(batch []Bet) []byte {
 
 	return buffer.Bytes()
 }
+
 // Parse the CSV file and return batchSize bets or the number of bets
 // that does not exceed 8000 bytes
 func ReadBetsFromCSV(filePath string, batchSize int, agencyId string) [][]Bet {
@@ -196,6 +197,9 @@ func ReadBetsFromCSV(filePath string, batchSize int, agencyId string) [][]Bet {
 			// 2 bytes (indican tamanio del Bet)
 			currentBatchBytes = betBytesSize + 2
 		}
+	}
+	if len(currentBatch) > 0 {
+		all_batches = append(all_batches, currentBatch)
 	}
 	return all_batches
 }
