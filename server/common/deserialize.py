@@ -17,20 +17,18 @@ def receive_batch(client_sock):
         # Leer tamaño del batch (2 bytes)
         batch_size_raw = recive_all(client_sock, 2)
         if not batch_size_raw or len(batch_size_raw) != 2:
-            logging.warning("No se pudo leer el tamaño del batch.")
-            return None, False
+            # True dado que seguro no tiene mas batchs para leer.
+            return None, True
 
         batch_size = int.from_bytes(batch_size_raw, byteorder='big')
-        logging.debug(f"Tamaño declarado del batch: {batch_size}")
 
         # Leer hasta batch_size bytes, o lo que se pueda (por si se corta)
         batch_data = b""
         while len(batch_data) < batch_size:
+            # Cambiar despues
             chunk = client_sock.recv(batch_size - len(batch_data))
             if not chunk:
-                logging.warning("Conexión cerrada antes de recibir todo el batch.")
-                success = False  # no llegó todo
-                break
+                return bets, False
             batch_data += chunk
 
         # Leer apuestas una por una
@@ -52,8 +50,6 @@ def receive_batch(client_sock):
 
             bet_raw = batch_data[index:index+bet_size]
             index += bet_size
-
-            logging.debug(f"Deserializando apuesta: {bet_raw}")
 
             try:
                 bet = deserialize_bet(bet_raw)
@@ -86,12 +82,9 @@ def recive_all(client_socket, bytes_to_receive):
         """Reads exactly bytes_to_receive bytes from client_socket"""
         data = b""
         while len(data) < bytes_to_receive:
-            try:
-                packet = client_socket.recv(bytes_to_receive - len(data))
-                if not packet:
-                    # Client close the connection, no more batchs
-                    return None
-                data += packet
-            except:
-                raise ConnectionError("Error reading from socket")
+            packet = client_socket.recv(bytes_to_receive - len(data))
+            if not packet:
+                # Client close the connection, no more batchs
+                return None
+            data += packet
         return data

@@ -40,24 +40,21 @@ class Server:
                 bets, success = receive_batch(client_sock)
 
                 # Cliente cerró la conexión (None) o no llegó ningún batch
-                if bets is None:
-                    logging.info("Conexión cerrada por el cliente.")
+                if bets is None and success:
+                    # Se quedo sin batchs
                     break
 
-                # Siempre loggear si recibimos algo
-                logging.info(f"action: receive_message | result: {success} | cantidad: {len(bets)}")
-
-                if success:
+                elif success:
                     logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
                     # for bet in bets:
                     #     store_bet(bet)
                     client_sock.sendall("ACK\n".encode("utf-8"))
                 else:
-                    logging.error(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
-                    client_sock.sendall("ERR\n".encode("utf-8"))
+                    logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
+                    break
 
         except OSError as e:
-            logging.error(f"action: receive_message | result: fail | error: {e}")
+            logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
         finally:
             client_sock.close()
 
