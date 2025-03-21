@@ -1,7 +1,8 @@
 import csv
 import datetime
-import time
 
+# Quantity of bytes used to inform the size of a respecting field 
+FIELD_LENGTH_BYTES = 2
 
 """ Bets storage location. """
 STORAGE_FILEPATH = "./bets.csv"

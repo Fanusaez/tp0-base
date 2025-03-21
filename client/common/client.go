@@ -1,13 +1,9 @@
 package common
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/binary"
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -92,7 +88,7 @@ func (c *Client) StartClientLoop() {
 		var data_of_batch []byte = serializeBatch(all_batches[i])
 
 		// Send the bet
-		err := c.sendAll(data_of_batch)
+		err := SendAll(c.conn, data_of_batch)
 		if err != nil {
 			log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 				c.config.ID,
@@ -109,140 +105,11 @@ func (c *Client) StartClientLoop() {
 	c.conn.Close()
 }
 
-func serializeBatch(batch []Bet) []byte {
-	buffer := new(bytes.Buffer)
-	auxBuffer := new(bytes.Buffer)
-
-	// Escribir un campo individual
-	writeField := func(data string, buffer *bytes.Buffer) {
-		binary.Write(buffer, binary.BigEndian, uint16(len(data)))
-		buffer.WriteString(data)
-	}
-
-	for _, bet := range batch {
-		betBuffer := new(bytes.Buffer)
-
-		// Escribir cada campo en betBuffer
-		writeField(bet.Id, betBuffer)
-		writeField(bet.Nombre, betBuffer)
-		writeField(bet.Apellido, betBuffer)
-		writeField(bet.Documento, betBuffer)
-		writeField(bet.Nacimiento, betBuffer)
-		writeField(bet.Numero, betBuffer)
-
-		betBytes := betBuffer.Bytes()
-
-		// Escribir tamaño de la apuesta
-		binary.Write(auxBuffer, binary.BigEndian, uint16(len(betBytes)))
-		auxBuffer.Write(betBytes)
-	}
-
-	// Escribir tamaño del batch + contenido
-	batchBytes := auxBuffer.Bytes()
-	binary.Write(buffer, binary.BigEndian, uint16(len(batchBytes)))
-	buffer.Write(batchBytes)
-
-	return buffer.Bytes()
-}
-
-// Parse the CSV file and return batchSize bets or the number of bets
-// that does not exceed 8000 bytes
-func ReadBetsFromCSV(filePath string, batchSize int, agencyId string) [][]Bet {
-	file, err := os.Open(filePath)
-
-	if err != nil {
-		log.Fatalf("Error al abrir el archivo: %v", err)
-	}
-
-	// Close when done
-	defer file.Close()
-
-	// all bets contains all the bets segmented into batchs
-	all_batches := [][]Bet{}
-	scanner := bufio.NewScanner(file)
-
-	currentBatchBytes := 2 // 2 bytes para indicar tamanio de cada batch
-	currentBatch := []Bet{}
-	for scanner.Scan() {
-		line := scanner.Text()
-		fields := strings.Split(line, ",")
-
-		// Create a bet
-		bet := Bet{
-			Id:         agencyId,
-			Nombre:     fields[0],
-			Apellido:   fields[1],
-			Documento:  fields[2],
-			Nacimiento: fields[3],
-			Numero:     fields[4],
-		}
-
-		// Calculate the size (bytes) of the bet
-		betBytesSize := 2
-		for _, field := range fields {
-			betBytesSize += len(field)
-		}
-
-		betBytesSize += 12 // 6 fields * 2 bytes
-
-		if currentBatchBytes+betBytesSize < 8000 && len(currentBatch) < batchSize {
-			// 12 bytes (2 bytes para indicar tamanio de cada campo)
-			// TODO: HACER CONSTANTES DESCRIPTVAS
-			currentBatchBytes += betBytesSize
-			currentBatch = append(currentBatch, bet)
-		} else {
-			all_batches = append(all_batches, currentBatch)
-			currentBatch = []Bet{bet}
-			// 2 bytes(indican tamanio de cada batch)
-			// 2 bytes (indican tamanio del Bet)
-			currentBatchBytes = betBytesSize + 2
-		}
-	}
-	if len(currentBatch) > 0 {
-		all_batches = append(all_batches, currentBatch)
-	}
-	return all_batches
-}
-
-// Sends a message to the server
-func (c *Client) sendAll(data []byte) error {
-	totalSent := 0
-	for totalSent < len(data) {
-		sent, err := c.conn.Write(data[totalSent:])
-		if err != nil {
-			log.Errorf("Error al enviar la apuesta: %v", err)
-			return err
-		}
-		totalSent += sent
-	}
-	return nil
-}
-
-// Recive lenData bytes from the server
-func (c *Client) reciveAll(lenData int) ([]byte, error) {
-	buffer := make([]byte, lenData)
-	totalReceived := 0
-
-	for totalReceived < lenData {
-		n, err := c.conn.Read(buffer[totalReceived:])
-		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-				c.config.ID,
-				err,
-			)
-			return nil, err
-		}
-		totalReceived += n
-	}
-
-	return buffer, nil
-}
-
 func (c *Client) reciveAck() {
 	// Receive ACK from server (4 bytes "ACK\n")
-	ack, err := c.reciveAll(4)
+	ack, err := ReciveAll(c.conn, AckSize)
 	if err != nil {
-		log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+		log.Errorf("action: receive_mess2age | result: fail | client_id: %v | error: %v",
 			c.config.ID,
 			err,
 		)

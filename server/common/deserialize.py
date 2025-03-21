@@ -14,17 +14,17 @@ def receive_batch(client_sock):
 
     try:
         # Total bytes from the batch
-        batch_size_raw = receive_all(client_sock, 2)
+        batch_size_raw = receive_all(client_sock, FIELD_LENGTH_BYTES)
 
         # No more batches, client may have sent all
-        if not batch_size_raw or len(batch_size_raw) != 2:
+        if not batch_size_raw or len(batch_size_raw) != FIELD_LENGTH_BYTES:
             return bets, success
         
         batch_size = int.from_bytes(batch_size_raw, byteorder='big')
         while batch_size > 0:
 
-            bet_size_raw = receive_all(client_sock, 2)
-            if not bet_size_raw or len(bet_size_raw) != 2:
+            bet_size_raw = receive_all(client_sock, FIELD_LENGTH_BYTES)
+            if not bet_size_raw or len(bet_size_raw) != FIELD_LENGTH_BYTES:
                 success = False
                 return bets, success
             
@@ -37,7 +37,7 @@ def receive_batch(client_sock):
 
             bet = deserialize_bet(bet_raw)
             bets.append(bet)
-            batch_size -= (2 + bet_size)
+            batch_size -= (FIELD_LENGTH_BYTES + bet_size)
 
     except RuntimeError as e:
         logging.error(f"Error general en receive_batch: {e}")
@@ -50,7 +50,7 @@ def deserialize_bet(data):
     bet_fields = []
     index = 0
     for _ in range(6):  # Tenemos 6 campos en cada apuesta
-        field_length = int.from_bytes(data[index:index+2], byteorder="big")
+        field_length = int.from_bytes(data[index:index+FIELD_LENGTH_BYTES], byteorder="big")
         index += 2
         field_value = data[index:index+field_length].decode("utf-8")
         index += field_length
