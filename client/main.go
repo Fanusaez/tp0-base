@@ -23,13 +23,6 @@ var log = logging.MustGetLogger("log")
 func InitConfig() (*viper.Viper, error) {
 	v := viper.New()
 
-	// Add env variables of lottery agency
-	v.BindEnv("nombre")
-	v.BindEnv("apellido")
-	v.BindEnv("documento")
-	v.BindEnv("nacimiento")
-	v.BindEnv("numero")
-
 	// Configure viper to read env variables with the CLI_ prefix
 	v.AutomaticEnv()
 	v.SetEnvPrefix("cli")
@@ -43,6 +36,7 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("server", "address")
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
+	v.BindEnv("batch", "maxAmount")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -92,21 +86,13 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	log.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s",
+	log.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s | batch_maxAmount: %s",
 		v.GetString("id"),
 		v.GetString("server.address"),
 		v.GetInt("loop.amount"),
 		v.GetDuration("loop.period"),
 		v.GetString("log.level"),
-	)
-
-	// logueamos para saber que se cargaron bien
-	log.Infof("action: config | result: success | nombre: %s | apellido: %s | dni: %v | nacimiento: %v | numero: %s",
-		v.GetString("nombre"),
-		v.GetString("apellido"),
-		v.GetInt("documento"),
-		v.GetTime("nacimiento"),
-		v.GetString("numero"),
+		v.GetString("batch.maxAmount"),
 	)
 }
 
@@ -124,21 +110,13 @@ func main() {
 	PrintConfig(v)
 
 	clientConfig := common.ClientConfig{
-		ServerAddress: v.GetString("server.address"),
-		ID:            v.GetString("id"),
-		LoopAmount:    v.GetInt("loop.amount"),
-		LoopPeriod:    v.GetDuration("loop.period"),
+		ServerAddress:  v.GetString("server.address"),
+		ID:             v.GetString("id"),
+		LoopAmount:     v.GetInt("loop.amount"),
+		LoopPeriod:     v.GetDuration("loop.period"),
+		BatchMaxAmount: int(v.GetInt("batch.maxAmount")),
 	}
 
-	clientBet := common.Bet{
-		Id: v.GetString("id"),
-		Nombre: v.GetString("nombre"),
-		Apellido: v.GetString("apellido"),
-		Documento: v.GetString("documento"),
-		Nacimiento: v.GetString("nacimiento"),
-		Numero: v.GetString("numero"),
-	}
-
-	client := common.NewClient(clientConfig, clientBet)
+	client := common.NewClient(clientConfig)
 	client.StartClientLoop()
 }

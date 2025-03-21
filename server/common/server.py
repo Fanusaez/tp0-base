@@ -32,23 +32,33 @@ class Server:
 
     def __handle_client_connection(self, client_sock):
         """
-        Read message from a specific client socket and closes the socket
-
-        If a problem arises in the communication with the client, the
-        client socket will also be closed
+        Maneja múltiples batchs de apuestas por una única conexión cliente.
+        Finaliza cuando el cliente cierra la conexión o se detecta un error grave.
         """
         try:
-            bet = recive_bet(client_sock)
-            #addr = client_sock.getpeername()
-            store_bets([bet])
-            logging.info(f"action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}")
-            
-            # Send acknoledgement to client
-            client_sock.sendall("ACK\n".encode('utf-8'))
+            while True:
+                bets, success = receive_batch(client_sock)
+
+                # Cliente cerró la conexión (None) o no llegó ningún batch
+                if bets is None:
+                    logging.info("Conexión cerrada por el cliente.")
+                    break
+
+                # Siempre loggear si recibimos algo
+                logging.info(f"action: receive_message | result: {success} | cantidad: {len(bets)}")
+
+                if success:
+                    logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
+                    # for bet in bets:
+                    #     store_bet(bet)
+                    client_sock.sendall("ACK\n".encode("utf-8"))
+                else:
+                    logging.error(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
+                    client_sock.sendall("ERR\n".encode("utf-8"))
+
         except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
+            logging.error(f"action: receive_message | result: fail | error: {e}")
         finally:
-            # Close client socket after exchanging messages
             client_sock.close()
 
     def __accept_new_connection(self):

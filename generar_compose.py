@@ -26,15 +26,10 @@ def generar_compose(archivo_salida, cantidad_clientes):
             f.write("    entrypoint: /client\n")
             f.write("    volumes:\n")
             f.write("      - ./client/config.yaml:/config.yaml\n")
+            f.write("      - ./.data/agency-{}.csv:/data/agency.csv\n")
             f.write("    environment:\n")
             f.write(f"       - CLI_ID={i}\n")
             f.write("       - CLI_LOG_LEVEL=DEBUG\n")
-            f.write("       - NOMBRE=Cristian\n")
-            f.write("       - APELLIDO=Diaz\n")
-            f.write("       - DNI=1234567\n")
-            f.write("       - DOCUMENTO=223333\n")
-            f.write("       - NACIMIENTO=1999-12-12\n")
-            f.write("       - NUMERO=7666\n")
             f.write("    networks:\n")
             f.write("      - testing_net\n")
             f.write("    depends_on:\n")
@@ -57,3 +52,4 @@ if __name__ == "__main__":
     cantidad_clientes = sys.argv[2]
 
     generar_compose(archivo_salida, cantidad_clientes)
+
