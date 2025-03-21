@@ -100,10 +100,10 @@ func (c *Client) StartClientLoop() {
 			)
 			return
 		}
-	}
 
-	// Receive ACK from server (4 bytes "ACK\n")
-	c.reciveAck()
+		// Receive ACK from server (4 bytes "ACK\n")
+		c.reciveAck()
+	}
 
 	// Close the connection
 	c.conn.Close()

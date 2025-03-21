@@ -42,6 +42,7 @@ class Server:
                 # Cliente cerró la conexión (None) o no llegó ningún batch
                 if bets is None and success:
                     # Se quedo sin batchs
+                    logging.info(f"action: exit | result: success")
                     break
 
                 elif success:
@@ -49,7 +50,6 @@ class Server:
                     # for bet in bets:
                     #     store_bet(bet)
                     client_sock.sendall("ACK\n".encode("utf-8"))
-                    break
                 else:
                     logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
                     break
