@@ -38,7 +38,7 @@ class Server:
                 bets, success = receive_batch(client_sock)
 
                 # No more batchs, exit loop
-                if bets is None and success:
+                if not bets and success:
                     logging.info(f"action: exit | result: success")
                     break
                 
