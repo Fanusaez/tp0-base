@@ -124,7 +124,7 @@ func (c *Client) StartClientLoop() {
 	var _ []string = ReceiveWinners(c.conn)
 
 	// Close the connection
-	c.conn.Close()
+	c.Close()
 }
 
 func (c *Client) reciveAck() {
@@ -149,7 +149,7 @@ func (c *Client) reciveAck() {
 // Close cierra la conexión del cliente de forma segura
 func (c *Client) Close() {
 	if c.conn != nil {
-		log.Infof("Cerrando conexión del cliente...")
+		log.Infof("action: exit | result: success")
 		c.conn.Close()
 		c.conn = nil
 	}
