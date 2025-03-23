@@ -50,6 +50,7 @@ class Server:
                 
                 # Batch received
                 elif success:
+                    logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
                     # Send Ack
                     client_sock.sendall("ACK\n".encode("utf-8"))
 
