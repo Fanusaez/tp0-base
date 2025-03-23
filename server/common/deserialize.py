@@ -20,6 +20,10 @@ def receive_batch(client_sock):
         if not batch_size_raw or len(batch_size_raw) != FIELD_LENGTH_BYTES:
             return bets, success
         
+        # If batch size is 0, client has no more batches
+        if int.from_bytes(batch_size_raw, byteorder='big') == 0:
+            return [], success
+        
         batch_size = int.from_bytes(batch_size_raw, byteorder='big')
         while batch_size > 0:
 
@@ -73,3 +77,32 @@ def receive_all(client_socket, bytes_to_receive):
 
         data += packet
     return data
+
+def receive_winners_request(client_sock):
+    try:
+        # Verificamos operacion
+        operation = receive_all(client_sock, OPPERATION_FIELD_LENGTH)
+        if not operation or len(operation) != OPPERATION_FIELD_LENGTH or int.from_bytes(operation, 'big') != REQUEST_WINNERS_AGENCY_ACTION:
+            logging.error("Error al recibir operacion")
+            return None
+        
+        # Recibimos longitud de bytes de id de agencia
+        len_id_raw = receive_all(client_sock, FIELD_LENGTH_BYTES)
+        if not len_id_raw or len(len_id_raw) != FIELD_LENGTH_BYTES:
+            logging.error("Error al recibir la longitud del id de agencia")
+            return None
+        
+        # Recibimos id de agencia
+        id_agency_raw = receive_all(client_sock, int.from_bytes(len_id_raw, 'big'))
+        if not id_agency_raw or len(id_agency_raw) != int.from_bytes(len_id_raw, 'big'):
+            logging.error("Error al recibir id de agencia")
+            return None
+        
+        # Retornamos id de agencia
+        id_agencia = id_agency_raw.decode('utf-8')
+        logging.info(f"Id de agencia recibido: {id_agencia}")
+        return int(id_agencia)
+    
+    except RuntimeError as e:
+        logging.error(f"Error general en receive_winners_request: {e}")
+        return None

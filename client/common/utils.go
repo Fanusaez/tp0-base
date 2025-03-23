@@ -2,12 +2,16 @@ package common
 
 import (
 	"net"
+	"bytes"
+	"encoding/binary"
 )
 
 const ProtocolFieldLength = 2
 const AllBetProtocolFieldsLength = 12 // Id + nombre + apellido + doc + nacimiento + nuemero
 const MaxBytesBatch = 8000 // 8kb
 const AckSize = 4
+
+const AskForWinnerInstruction = 0x03
 
 // Sends a message to the server
 func SendAll(socket net.Conn, data []byte) error {
@@ -40,4 +44,25 @@ func ReciveAll(socket net.Conn, lenData int) ([]byte, error) {
 	}
 
 	return buffer, nil
+}
+
+
+// Protocol:
+// 1 byte: instrucción
+// 2 bytes: longitud del campo de datos
+// n bytes: datos
+func AskForWinner(socket net.Conn, id string) {
+	buf := new(bytes.Buffer)
+
+	// Instrucción: 0x03
+	buf.WriteByte(AskForWinnerInstruction)
+
+	// Longitud de ID (2 bytes)
+	binary.Write(buf, binary.BigEndian, uint16(len(id)))
+
+	// ID como string (n bytes)
+	buf.WriteString(id)
+
+	// Enviar
+	SendAll(socket, buf.Bytes())
 }

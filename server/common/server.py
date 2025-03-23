@@ -1,8 +1,8 @@
 import socket
 import logging
-import struct
 from common.utils import *
 from common.deserialize import *
+from common.serialize import *
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -45,19 +45,21 @@ class Server:
                 # Batch received
                 elif success:
                     logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
-                    # for bet in bets:
-                    #     store_bet(bet)
-
                     # Send Ack
                     client_sock.sendall("ACK\n".encode("utf-8"))
+
+                    store_bets(bets)
                 else:
                     logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
                     break
 
         except OSError as e:
-            logging.info(f"action: receive_message | result: success | cantidad: {len(bets)}")
-        finally:
-            client_sock.close()
+            logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
+
+        agency_id = receive_winners_request(client_sock)
+        winners = get_winners_bet(agency_id)
+        send_winners(client_sock, winners)
+        client_sock.close()
 
     def __accept_new_connection(self):
         """ 

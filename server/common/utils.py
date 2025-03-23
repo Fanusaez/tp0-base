@@ -1,13 +1,20 @@
 import csv
 import datetime
+import logging
 
 # Quantity of bytes used to inform the size of a respecting field 
 FIELD_LENGTH_BYTES = 2
 
+#
+OPPERATION_FIELD_LENGTH = 1
+
+# Protocol instruction codes
+REQUEST_WINNERS_AGENCY_ACTION = 0x03
+
 """ Bets storage location. """
 STORAGE_FILEPATH = "./bets.csv"
 """ Simulated winner number in the lottery contest. """
-LOTTERY_WINNER_NUMBER = 7574
+LOTTERY_WINNER_NUMBER = 2201
 
 
 """ A lottery bet registry. """
@@ -50,3 +57,6 @@ def load_bets() -> list[Bet]:
         for row in reader:
             yield Bet(row[0], row[1], row[2], row[3], row[4], row[5])
 
+
+def get_winners_bet(agency_id: int):
+    return [bet for bet in load_bets() if has_won(bet) and bet.agency == agency_id]

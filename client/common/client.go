@@ -101,6 +101,23 @@ func (c *Client) StartClientLoop() {
 		c.reciveAck()
 	}
 
+	// Sends message to signal no more batchs
+	err := SendAll(c.conn, []byte{0x00, 0x00})
+	if err != nil {
+		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return
+	}
+
+	// Send message to know winner
+	AskForWinner(c.conn, c.config.ID)
+
+	// Recive and print winner
+	var winners []string = ReceiveWinners(c.conn)
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winners))
+
 	// Close the connection
 	c.conn.Close()
 }
