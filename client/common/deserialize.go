@@ -20,8 +20,6 @@ func ReceiveWinners(socket net.Conn) []string {
 	// Convert the amount of winners to int
 	amountWinners := binary.BigEndian.Uint16(amountWinnersRaw)
 
-	log.Infof("Cantidad de ganadores: %v", amountWinnersRaw)
-
 	winnersDni := make([]string, amountWinners)
 	for i := 0; i < int(amountWinners); i++ {
 		// Recive the winner
