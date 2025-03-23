@@ -121,8 +121,7 @@ func (c *Client) StartClientLoop() {
 	var numberWinners int = ReceiveNumberOfWinners(c.conn)
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
 
-	var documents_winners []string = ReceiveWinners(c.conn)
-	log.Infof("action: consulta_ganadores | result: success | ganadores: %v", documents_winners)
+	var _ []string = ReceiveWinners(c.conn)
 
 	// Close the connection
 	c.conn.Close()
