@@ -63,7 +63,8 @@ class Server:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
 
         # Client finished sending batches
-        self.finished_clients.append(self.current_client_id)
+        if self.current_client_id not in self.finished_clients:
+            self.finished_clients.append(self.current_client_id)
         self.current_client_id = None
 
         agency_id = receive_winners_request(client_sock)
