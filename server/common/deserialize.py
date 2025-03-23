@@ -100,7 +100,6 @@ def receive_winners_request(client_sock):
         
         # Retornamos id de agencia
         id_agencia = id_agency_raw.decode('utf-8')
-        logging.info(f"Id de agencia recibido: {id_agencia}")
         return int(id_agencia)
     
     except RuntimeError as e:
@@ -121,7 +120,6 @@ def handshake(socket):
             return None
         
         id = id_raw.decode('utf-8')
-        logging.info(f"Handshake exitoso, id de cliente: {id}")
         return int(id)
     except:
         logging.error("Error en handshake")
