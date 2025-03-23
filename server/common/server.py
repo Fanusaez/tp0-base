@@ -56,6 +56,7 @@ class Server:
 
                     store_bets(bets)
                 else:
+                    logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
                     break
 
         except OSError as e:
