@@ -66,3 +66,20 @@ func AskForWinner(socket net.Conn, id string) {
 	// Enviar
 	SendAll(socket, buf.Bytes())
 }
+
+
+// Protocol:
+// 2 bytes longitud ID
+// n bytes ID
+func Handshake(socket net.Conn, id string) {
+	buf := new(bytes.Buffer)
+
+	// Longitud de ID (2 bytes)
+	binary.Write(buf, binary.BigEndian, uint16(len(id)))
+
+	// ID como string (n bytes)
+	buf.WriteString(id)
+
+	// Enviar
+	SendAll(socket, buf.Bytes())
+}

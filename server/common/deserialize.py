@@ -106,3 +106,23 @@ def receive_winners_request(client_sock):
     except RuntimeError as e:
         logging.error(f"Error general en receive_winners_request: {e}")
         return None
+    
+def handshake(socket):
+    try:
+        len_id_raw = receive_all(socket, FIELD_LENGTH_BYTES)
+        if not len_id_raw or len(len_id_raw) != FIELD_LENGTH_BYTES:
+            logging.error("Error en handshake al recibir la longitud del id de cliente")
+            return None
+        len_id = int.from_bytes(len_id_raw, 'big')
+
+        id_raw = receive_all(socket, len_id)
+        if not id_raw or len(id_raw) != len_id:
+            logging.error("Error wn handshake al recibir el id de cliente")
+            return None
+        
+        id = id_raw.decode('utf-8')
+        logging.info(f"Handshake exitoso, id de cliente: {id}")
+        return int(id)
+    except:
+        logging.error("Error en handshake")
+        return None

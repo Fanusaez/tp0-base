@@ -12,6 +12,9 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._client_socket = None
         self.running = True
+        self.clients_socket = {}
+        self.finished_clients = []
+        self.current_client_id = 0
 
     def run(self):
         """
@@ -24,6 +27,10 @@ class Server:
 
         while self.running:
             client_socket = self.__accept_new_connection()
+            client_id = handshake(client_socket)
+            if client_id and client_id not in self.clients_socket:
+                self.clients_socket[client_id] = client_socket
+                self.current_client_id = client_id
             if client_socket:
                 self._client_socket = client_socket
                 self.__handle_client_connection(client_socket)
@@ -39,27 +46,34 @@ class Server:
 
                 # No more batchs, exit loop
                 if not bets and success:
-                    logging.info(f"action: exit | result: success")
                     break
                 
                 # Batch received
                 elif success:
-                    logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
                     # Send Ack
                     client_sock.sendall("ACK\n".encode("utf-8"))
 
                     store_bets(bets)
                 else:
-                    logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
                     break
 
         except OSError as e:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
 
+        # Client finished sending batches
+        self.finished_clients.append(self.current_client_id)
+        self.current_client_id = -1
+
         agency_id = receive_winners_request(client_sock)
         winners = get_winners_bet(agency_id)
-        send_winners(client_sock, winners)
-        client_sock.close()
+        send_number_of_winners(client_sock, len(winners))
+        if len(self.finished_clients) == 5:
+            logging.info("action: sorteo | result: success")
+            for i in range(1, 6):
+                winners = get_winners_bet(i)
+                send_winners(self.clients_socket[i], winners)
+                self.clients_socket[i].close()
+
 
     def __accept_new_connection(self):
         """ 

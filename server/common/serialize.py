@@ -7,11 +7,10 @@
 import logging
 
 def send_winners(socket, winners_bet):
-    """
+    """client_sock.close()client_sock.close()client_sock.close()client_sclient_sock.close()client_sock.close()ock.close().close()ock.close().close()ock.close()
     Send winners bets to client
     """
     response = b""
-    logging.info("Cantidad de ganadores: " + str(len(winners_bet)))
     try:
         # Escribir la cantidad de ganadores (2 bytes)
         response += len(winners_bet).to_bytes(2, byteorder="big")
@@ -22,10 +21,22 @@ def send_winners(socket, winners_bet):
             response += dni_bytes  # el DNI como tal
 
         send_all(socket, response)
-
-        logging.info(f"Winners sent to client")
     except RuntimeError as e:
         logging.error(f"Error sending winners, connection closed")
+
+
+# Protocolo:
+#   -4 bytes: cantidad de ganadores
+def send_number_of_winners(socket, number_of_winners):
+    """
+    Send number of winners to client
+    """
+    try:
+        send_all(socket, number_of_winners.to_bytes(4, byteorder="big"))
+    except:
+        logging.error(f"Error sending number of winners")
+        raise RuntimeError("Error sending number of winners")
+
 
 def send_all(socket, data):
     """

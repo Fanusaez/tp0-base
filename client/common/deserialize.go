@@ -5,6 +5,11 @@ import (
 	"net"
 )
 
+
+// Prtocol
+// - 2 bytes: amount of winners
+// - 2 bytes: length of dni
+// - n bytes: dni
 func ReceiveWinners(socket net.Conn) []string {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 2)
@@ -30,4 +35,17 @@ func ReceiveWinners(socket net.Conn) []string {
 		winnersDni[i] = string(dni)
 	}
 	return winnersDni
+}
+
+
+func ReceiveNumberOfWinners(socket net.Conn) int {
+	// Recive the amount of winners
+	amountWinnersRaw, err := ReciveAll(socket, 4)
+	if err != nil {
+		log.Errorf("Error al recibir la cantidad de ganadores: %v", err)
+		return 0
+	}
+	// Convert the amount of winners to int
+	amountWinners := binary.BigEndian.Uint32(amountWinnersRaw)
+	return int(amountWinners)
 }

@@ -82,6 +82,9 @@ func (c *Client) StartClientLoop() {
 
 	c.createClientSocket()
 
+	// Handshake: send ID
+	Handshake(c.conn, c.config.ID)
+
 	for i := 0; i < len(all_batches); i++ {
 
 		// Serialize the bet
@@ -115,8 +118,11 @@ func (c *Client) StartClientLoop() {
 	AskForWinner(c.conn, c.config.ID)
 
 	// Recive and print winner
-	var winners []string = ReceiveWinners(c.conn)
-	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(winners))
+	var numberWinners int = ReceiveNumberOfWinners(c.conn)
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
+
+	var documents_winners []string = ReceiveWinners(c.conn)
+	log.Infof("action: consulta_ganadores | result: success | ganadores: %v", documents_winners)
 
 	// Close the connection
 	c.conn.Close()
