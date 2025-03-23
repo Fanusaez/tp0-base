@@ -62,7 +62,7 @@ class Server:
 
         # Client finished sending batches
         self.finished_clients.append(self.current_client_id)
-        self.current_client_id = -1
+        self.current_client_id = None
 
         agency_id = receive_winners_request(client_sock)
         winners = get_winners_bet(agency_id)
@@ -73,6 +73,7 @@ class Server:
                 winners = get_winners_bet(i)
                 send_winners(self.clients_socket[i], winners)
                 self.clients_socket[i].close()
+        self.shutdown()
 
 
     def __accept_new_connection(self):
