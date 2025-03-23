@@ -62,14 +62,15 @@ class Server:
         except OSError as e:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
 
+        agency_id = receive_winners_request(client_sock)
+        winners = get_winners_bet(agency_id)
+        send_number_of_winners(client_sock, len(winners))
+
         # Client finished sending batches
         if self.current_client_id not in self.finished_clients:
             self.finished_clients.append(self.current_client_id)
         self.current_client_id = None
 
-        agency_id = receive_winners_request(client_sock)
-        winners = get_winners_bet(agency_id)
-        send_number_of_winners(client_sock, len(winners))
         if len(self.finished_clients) == 5:
             logging.info("action: sorteo | result: success")
             for i in range(1, 6):
