@@ -73,7 +73,7 @@ class Server:
                 winners = get_winners_bet(i)
                 send_winners(self.clients_socket[i], winners)
                 self.clients_socket[i].close()
-        self.shutdown()
+            self.shutdown()
 
 
     def __accept_new_connection(self):
