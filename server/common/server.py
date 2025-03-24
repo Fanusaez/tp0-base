@@ -79,7 +79,7 @@ class Server:
 
         if len(self.finished_clients) == 5:
             # dormir 1 seg
-            #time.sleep(1)
+            time.sleep(1)
             logging.info("action: sorteo | result: success")
             for i in range(1, 6):
                 winners = get_winners_bet(i)
