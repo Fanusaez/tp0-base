@@ -6,10 +6,12 @@ import (
 )
 
 
-// Prtocol
-// - 2 bytes: amount of winners
-// - 2 bytes: length of dni
-// - n bytes: dni
+
+// Receive the winners from the server
+// Protocol:
+// 	- 2 bytes: amount of winners
+// 	- 2 bytes: length of dni
+// 	- n bytes: dni
 func ReceiveWinners(socket net.Conn) ([]string, error) {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 2)
@@ -35,6 +37,9 @@ func ReceiveWinners(socket net.Conn) ([]string, error) {
 	return winnersDni, nil
 }
 
+// Receive the amount of winners from the server
+// Protocol:
+// 	- 4 bytes: amount of winners
 func ReceiveNumberOfWinners(socket net.Conn) (int, error) {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 4)
@@ -45,4 +50,21 @@ func ReceiveNumberOfWinners(socket net.Conn) (int, error) {
 	// Convert the amount of winners to int
 	amountWinners := binary.BigEndian.Uint32(amountWinnersRaw)
 	return int(amountWinners), nil
+}
+
+func ReciveAck(conn net.Conn) error {
+	// Receive ACK from server (4 bytes "ACK\n")
+	ack, err := ReciveAll(conn, AckSize)
+	if err != nil {
+		log.Errorf("action: receive_mess2age | result: fail | error: %v",
+			err,
+		)
+		return err
+	}
+
+	if string(ack) != "ACK\n" {
+		log.Errorf("action: receive_message | result: fail| error: invalid ack")
+		return err
+	}
+	return nil
 }

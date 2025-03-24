@@ -21,16 +21,6 @@ type ClientConfig struct {
 	BatchMaxAmount int
 }
 
-// Bet info
-type Bet struct {
-	Id         string
-	Nombre     string
-	Apellido   string
-	Documento  string
-	Nacimiento string
-	Numero     string
-}
-
 // Client Entity that encapsulates how
 type Client struct {
 	config ClientConfig
@@ -108,7 +98,7 @@ func (c *Client) StartClientLoop() {
 		}
 
 		// Receive ACK from server (4 bytes "ACK\n")
-		err = c.reciveAck()
+		err = ReciveAck(c.conn)
 		if err != nil {
 			log.Errorf("action: receive ack | result: fail | client_id: %v | error: %v",
 				c.config.ID,
@@ -140,7 +130,7 @@ func (c *Client) StartClientLoop() {
 
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
 
-	err = c.sendAck()
+	err = SendAck(c.conn)
 	if err != nil {
 		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
@@ -155,7 +145,7 @@ func (c *Client) StartClientLoop() {
 	}
 	log.Infof("action: recibir_ganadores | result: success | ganadores: %v", winners)
 
-	err = c.sendAck()
+	err = SendAck(c.conn)
 	if err != nil {
 		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
@@ -166,39 +156,6 @@ func (c *Client) StartClientLoop() {
 	// Close the connection
 	c.Close()
 	os.Exit(0)
-}
-
-func (c *Client) reciveAck() error {
-	// Receive ACK from server (4 bytes "ACK\n")
-	ack, err := ReciveAll(c.conn, AckSize)
-	if err != nil {
-		log.Errorf("action: receive_mess2age | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
-		return err
-	}
-
-	if string(ack) != "ACK\n" {
-		log.Errorf("action: receive_message | result: fail | client_id: %v | error: invalid ack",
-			c.config.ID,
-		)
-		return err
-	}
-	return nil
-}
-
-func (c *Client) sendAck() error {
-	// Send ACK to client (4 bytes "ACK\n")
-	err := SendAll(c.conn, []byte("ACK\n"))
-	if err != nil {
-		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
-		return err
-	}
-	return nil
 }
 
 // Close cierra la conexión del cliente de forma segura
