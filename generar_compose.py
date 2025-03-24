@@ -14,7 +14,7 @@ def generar_compose(archivo_salida, cantidad_clientes):
         f.write("      - ./server/config.ini:/config.ini\n")
         f.write("    environment:\n")
         f.write("      - PYTHONUNBUFFERED=1\n")
-        f.write("      - LOGGING_LEVEL=DEBUG\n")
+        f.write("      - LOGGING_LEVEL=INFO\n")
         f.write("    networks:\n")
         f.write("      - testing_net\n\n")
 
@@ -29,7 +29,7 @@ def generar_compose(archivo_salida, cantidad_clientes):
             f.write(f"      - ./.data/agency-{i}.csv:/data/agency.csv\n")
             f.write("    environment:\n")
             f.write(f"      - CLI_ID={i}\n")
-            f.write("      - CLI_LOG_LEVEL=DEBUG\n")
+            f.write("      - CLI_LOG_LEVEL=INFO\n")
             f.write("    networks:\n")
             f.write("      - testing_net\n")
             f.write("    depends_on:\n")
