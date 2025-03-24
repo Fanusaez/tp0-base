@@ -78,6 +78,7 @@ class Server:
                 winners = get_winners_bet(i)
                 send_winners(self.clients_socket[i], winners)
                 if receive_ack(self.clients_socket[i]):
+                    logging.info(f"action: ack_winners | result: success")
                     self.clients_socket[i].close()
             self.shutdown()
 
