@@ -69,6 +69,7 @@ class Server:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
 
         try:
+
             agency_id = receive_winners_request(client_sock)
             winners = get_winners_bet(agency_id)
             send_number_of_winners(client_sock, len(winners))
@@ -83,7 +84,7 @@ class Server:
 
             if len(self.finished_clients) == self.cant_clientes:
                 # dormir 1 seg
-                #time.sleep(1)
+                time.sleep(1)
                 logging.info("action: sorteo | result: success")
                 for i in range(1, self.cant_clientes + 1):
                     winners = get_winners_bet(i)
@@ -91,6 +92,7 @@ class Server:
                     if not receive_ack(self.clients_socket[i]):
                         logging.info("action: receive_ack | result: fail")
                         return
+                    logging.info(f"action: recv ACK DE: {i} | result: success")
                 self.shutdown()
         except:
             logging.info(f"action: sorteo | result: fail")

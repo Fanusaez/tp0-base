@@ -189,8 +189,9 @@ func (c *Client) sendAck() error {
 // Close cierra la conexión del cliente de forma segura
 func (c *Client) Close() {
 	if c.conn != nil {
-		log.Infof("action: exit | result: success")
+		//log.Infof("action: exit | result: success")
 		c.conn.Close()
 		c.conn = nil
 	}
+	os.Exit(0)
 }
