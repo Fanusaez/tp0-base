@@ -23,6 +23,7 @@ def send_winners(socket, winners_bet):
         send_all(socket, response)
     except RuntimeError as e:
         logging.error(f"Error sending winners, connection closed")
+        raise e
 
 
 # Protocolo:

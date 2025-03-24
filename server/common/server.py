@@ -7,7 +7,7 @@ import time
 import sys
 
 class Server:
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, cant_clientes):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
@@ -17,6 +17,7 @@ class Server:
         self.clients_socket = {}
         self.finished_clients = []
         self.current_client_id = 0
+        self.cant_clientes = cant_clientes
 
     def run(self):
         """
@@ -27,7 +28,7 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        while self.running:
+        for i in range(self.cant_clientes):
             try:
                 client_socket = self.__accept_new_connection()
                 client_id = handshake(client_socket)
@@ -66,25 +67,28 @@ class Server:
 
         except OSError as e:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
+        try:
+            agency_id = receive_winners_request(client_sock)
+            winners = get_winners_bet(agency_id)
+            send_number_of_winners(client_sock, len(winners))
 
-        agency_id = receive_winners_request(client_sock)
-        winners = get_winners_bet(agency_id)
-        send_number_of_winners(client_sock, len(winners))
-
-        receive_ack(client_sock)
+            receive_ack(client_sock)
         
-        # Client finished sending batches
-        if self.current_client_id not in self.finished_clients:
-            self.finished_clients.append(self.current_client_id)
+            # Client finished sending batches
+            if self.current_client_id not in self.finished_clients:
+                self.finished_clients.append(self.current_client_id)
 
-        if len(self.finished_clients) == 5:
-            # dormir 1 seg
-            #time.sleep(1)
-            logging.info("action: sorteo | result: success")
-            for i in range(1, 6):
-                winners = get_winners_bet(i)
-                send_winners(self.clients_socket[i], winners)
-                receive_ack(self.clients_socket[i])
+            if len(self.finished_clients) == self.cant_clientes:
+                # dormir 1 seg
+                #time.sleep(1)
+                logging.info("action: sorteo | result: success")
+                for i in range(1, 6):
+                    winners = get_winners_bet(i)
+                    send_winners(self.clients_socket[i], winners)
+                    receive_ack(self.clients_socket[i])
+                self.shutdown()
+        except OSError as e:
+            logging.info(f"action: sorteo | result: fail")
             self.shutdown()
 
 
@@ -109,13 +113,15 @@ class Server:
         self.running = False
         try:
             for socket in self.clients_socket.values():
-                socket.close()
+                if socket:
+                    socket.close()
             logging.info("action: shutdown | result: success")
 
         except OSError as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
-            self._server_socket.close()
+            if self._server_socket:
+                self._server_socket.close()
             logging.info("Server has been shutdown")
 
 

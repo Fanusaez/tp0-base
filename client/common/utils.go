@@ -71,7 +71,7 @@ func AskForWinner(socket net.Conn, id string) {
 // Protocol:
 // 2 bytes longitud ID
 // n bytes ID
-func Handshake(socket net.Conn, id string) {
+func Handshake(socket net.Conn, id string) error {
 	buf := new(bytes.Buffer)
 
 	// Longitud de ID (2 bytes)
@@ -81,5 +81,10 @@ func Handshake(socket net.Conn, id string) {
 	buf.WriteString(id)
 
 	// Enviar
-	SendAll(socket, buf.Bytes())
+	err := SendAll(socket, buf.Bytes())
+	if err != nil {
+		log.Errorf("Error al enviar el handshake: %v", err)
+		return err
+	}
+	return nil
 }

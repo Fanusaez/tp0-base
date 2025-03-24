@@ -35,6 +35,7 @@ def initialize_config():
         config_params["port"] = int(config["DEFAULT"].get("SERVER_PORT", os.getenv('SERVER_PORT')))
         config_params["listen_backlog"] = int(config["DEFAULT"].get("SERVER_LISTEN_BACKLOG", os.getenv('SERVER_LISTEN_BACKLOG')))
         config_params["logging_level"] = config["DEFAULT"].get("LOGGING_LEVEL", os.getenv('LOGGING_LEVEL'))
+        config_params["cant_clientes"] = int(config["DEFAULT"].get("CANT_CLIENTES", os.getenv('CANT_CLIENTES')))
 
     except KeyError as e:
         raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
@@ -49,16 +50,17 @@ def main():
     logging_level = config_params["logging_level"]
     port = config_params["port"]
     listen_backlog = config_params["listen_backlog"]
+    cant_clientes = config_params["cant_clientes"]
 
     initialize_log(logging_level)
 
     # Log config parameters at the beginning of the program to verify the configuration
     # of the component
     logging.debug(f"action: config | result: success | port: {port} | "
-                  f"listen_backlog: {listen_backlog} | logging_level: {logging_level}")
+                  f"listen_backlog: {listen_backlog} | logging_level: {logging_level} |  cant_clientes: {cant_clientes}")
 
     # Initialize server and start server loop
-    server = Server(port, listen_backlog)
+    server = Server(port, listen_backlog, cant_clientes)
 
     # Pasar el server a la función usando functools.partial
     signal.signal(signal.SIGTERM, partial(handle_sigterm, server))

@@ -10,12 +10,12 @@ import (
 // - 2 bytes: amount of winners
 // - 2 bytes: length of dni
 // - n bytes: dni
-func ReceiveWinners(socket net.Conn) []string {
+func ReceiveWinners(socket net.Conn) ([]string, error) {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 2)
 	if err != nil {
 		log.Errorf("Error al recibir la cantidad de ganadores: %v", err)
-		return nil
+		return nil, err
 	}
 	// Convert the amount of winners to int
 	amountWinners := binary.BigEndian.Uint16(amountWinnersRaw)
@@ -26,24 +26,23 @@ func ReceiveWinners(socket net.Conn) []string {
 		winnerDniLenghtRaw, err := ReciveAll(socket, ProtocolFieldLength)
 		if err != nil {
 			log.Errorf("Error al recibir el ganador: %v", err)
-			return nil
+			return nil, err
 		}
 		winnerDniLenght := binary.BigEndian.Uint16(winnerDniLenghtRaw)
 		dni, _ := ReciveAll(socket, int(winnerDniLenght))
 		winnersDni[i] = string(dni)
 	}
-	return winnersDni
+	return winnersDni, nil
 }
 
-
-func ReceiveNumberOfWinners(socket net.Conn) int {
+func ReceiveNumberOfWinners(socket net.Conn) (int, error) {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 4)
 	if err != nil {
 		log.Errorf("Error al recibir la cantidad de ganadores: %v", err)
-		return 0
+		return 0, err
 	}
 	// Convert the amount of winners to int
 	amountWinners := binary.BigEndian.Uint32(amountWinnersRaw)
-	return int(amountWinners)
+	return int(amountWinners), nil
 }

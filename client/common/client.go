@@ -118,38 +118,15 @@ func (c *Client) StartClientLoop() {
 	AskForWinner(c.conn, c.config.ID)
 
 	// Recive and print winner
-	var numberWinners int = ReceiveNumberOfWinners(c.conn)
-	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
-	c.sendAck()
-	var _ []string = ReceiveWinners(c.conn)
-
-	c.sendAck()
-	// Close the connection
-	c.Close()
-}
-
-func (c *Client) reciveAck() {
-	// Receive ACK from server (4 bytes "ACK\n")
-	ack, err := ReciveAll(c.conn, AckSize)
+	numberWinners, err := ReceiveNumberOfWinners(c.conn)
 	if err != nil {
-		log.Errorf("action: receive_mess2age | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
+		log.Errorf("action: consulta_ganadores | result: fail | error: %v", err)
 		return
 	}
+	
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
 
-	if string(ack) != "ACK\n" {
-		log.Errorf("action: receive_message | result: fail | client_id: %v | error: invalid ack",
-			c.config.ID,
-		)
-		return
-	}
-}
-
-func (c *Client) sendAck() {
-	// Send ACK to client (4 bytes "ACK\n")
-	err := SendAll(c.conn, []byte("ACK\n"))
+	err = c.sendAck()
 	if err != nil {
 		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
@@ -157,6 +134,56 @@ func (c *Client) sendAck() {
 		)
 		return
 	}
+	winners, err := ReceiveWinners(c.conn)
+	if err != nil {
+		log.Errorf("action: recibir_ganadores | result: fail | error: %v", err)
+		return
+	}
+	log.Infof("action: recibir_ganadores | result: success | ganadores: %v", winners)
+
+	err = c.sendAck()
+	if err != nil {
+		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return
+	}
+	// Close the connection
+	c.Close()
+}
+
+func (c *Client) reciveAck() error {
+	// Receive ACK from server (4 bytes "ACK\n")
+	ack, err := ReciveAll(c.conn, AckSize)
+	if err != nil {
+		log.Errorf("action: receive_mess2age | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return err
+	}
+
+	if string(ack) != "ACK\n" {
+		log.Errorf("action: receive_message | result: fail | client_id: %v | error: invalid ack",
+			c.config.ID,
+		)
+		return err
+	}
+	return nil
+}
+
+func (c *Client) sendAck() error {
+	// Send ACK to client (4 bytes "ACK\n")
+	err := SendAll(c.conn, []byte("ACK\n"))
+	if err != nil {
+		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return err
+	}
+	return nil
 }
 
 // Close cierra la conexión del cliente de forma segura
