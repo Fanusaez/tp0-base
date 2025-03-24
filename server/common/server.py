@@ -28,14 +28,17 @@ class Server:
         """
 
         while self.running:
-            client_socket = self.__accept_new_connection()
-            client_id = handshake(client_socket)
-            if client_id and client_id not in self.clients_socket:
-                self.clients_socket[client_id] = client_socket
-                self.current_client_id = client_id
-            if client_socket:
-                self._client_socket = client_socket
-                self.__handle_client_connection(client_socket)
+            try:
+                client_socket = self.__accept_new_connection()
+                client_id = handshake(client_socket)
+                if client_id and client_id not in self.clients_socket:
+                    self.clients_socket[client_id] = client_socket
+                    self.current_client_id = client_id
+                if client_socket:
+                    self._client_socket = client_socket
+                    self.__handle_client_connection(client_socket)
+            except:
+                return None
 
     def __handle_client_connection(self, client_sock):
         """
@@ -108,7 +111,7 @@ class Server:
             for socket in self.clients_socket.values():
                 socket.close()
             logging.info("action: shutdown | result: success")
-            
+
         except OSError as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
