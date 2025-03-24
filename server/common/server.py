@@ -13,11 +13,11 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._client_socket = None
-        self.running = True
-        self.clients_socket = {}
-        self.finished_clients = []
-        self.current_client_id = 0
-        self.cant_clientes = cant_clientes
+        self._running = True
+        self._clients_socket = {}
+        self._finished_clients = []
+        self._current_client_id = 0
+        self._cant_clientes = cant_clientes
 
     def run(self):
         """
@@ -28,23 +28,25 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        for i in range(self.cant_clientes):
+        while self._running:
             try:
                 client_socket = self.__accept_new_connection()
+                # Handshake with client
                 client_id = handshake(client_socket)
-                if client_id and client_id not in self.clients_socket:
-                    self.clients_socket[client_id] = client_socket
-                    self.current_client_id = client_id
-                if client_socket:
+                if client_id and client_id not in self._clients_socket and client_socket:
+                    # Add to diccionary
+                    self._clients_socket[client_id] = client_socket
+                    # Set current client id and client socket
+                    self._current_client_id = client_id
                     self._client_socket = client_socket
                     self.__handle_client_connection(client_socket)
             except:
-                return None
+                self.shutdown()
 
     def __handle_client_connection(self, client_sock):
         """
-        Maneja múltiples batchs de apuestas por una única conexión cliente.
-        Finaliza cuando el cliente cierra la conexión o se detecta un error grave.
+        Handle client connection, receving all batches from client
+        and store them in database
         """
         try:
             while True:
@@ -56,48 +58,68 @@ class Server:
                 
                 # Batch received
                 elif success:
-                    logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
-                    # Send Ack
+                    #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
                     client_sock.sendall("ACK\n".encode("utf-8"))
-
                     store_bets(bets)
+
+                # Error receiving batch
                 else:
                     logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
                     break
 
         except OSError as e:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
+            raise RuntimeError("Error receiving batch")
 
         try:
-
-            agency_id = receive_winners_request(client_sock)
-            winners = get_winners_bet(agency_id)
-            send_number_of_winners(client_sock, len(winners))
-
-            if not receive_ack(client_sock):
-                logging.info("action: receive_ack | result: fail")
-                return
-        
-            # Client finished sending batches
-            if self.current_client_id not in self.finished_clients:
-                self.finished_clients.append(self.current_client_id)
-
-            if len(self.finished_clients) == self.cant_clientes:
-                # dormir 1 seg
-                time.sleep(1)
-                logging.info("action: sorteo | result: success")
-                for i in range(1, self.cant_clientes + 1):
-                    winners = get_winners_bet(i)
-                    send_winners(self.clients_socket[i], winners)
-                    if not receive_ack(self.clients_socket[i]):
-                        logging.info("action: receive_ack | result: fail")
-                        return
-                    logging.info(f"action: recv ACK DE: {i} | result: success")
-                self.shutdown()
+            self.__handle_post_batch_process()
         except:
             logging.info(f"action: sorteo | result: fail")
-            self.shutdown()
+            raise RuntimeError("Error in post batch process")
 
+    def __handle_post_batch_process(self):
+        """
+        Handle post batch process:
+            - Receives winners request
+            - Sends numebrs of winners to client
+            - Sends winners to client after all of them finished sending batches
+        """
+        try:
+            # Receive client int ID
+            agency_id = receive_winners_request(self._client_socket)
+
+            winners = get_winners_bet(agency_id)
+            send_number_of_winners(self._client_socket, len(winners))
+
+            # Receive ACK from client
+            if not receive_ack(self._client_socket):
+                logging.info("action: receive_ack | result: fail")
+                return
+
+            # Client finished sending batches, add it to finished clients
+            if self._current_client_id not in self._finished_clients:
+                self._finished_clients.append(self._current_client_id)
+
+            if len(self._finished_clients) >= self._cant_clientes:
+
+                # WARNING: This sleep is only so the logs are printed in test cases
+                # Without this sleep, the logs are printed after the test case finishes
+                # However logs are printed correcly in local machine
+                #time.sleep(1)
+
+                logging.info("action: sorteo | result: success")
+                for i in range(1, self._cant_clientes + 1):
+                    winners_document = get_winners_bet(i)
+                    send_winners(self._clients_socket[i], winners_document)
+                    # Wait for ACK
+                    if not receive_ack(self._clients_socket[i]):
+                        logging.error("action: receive_ack | result: fail")
+                        return
+                # Close server
+                self.shutdown()
+        except:
+            logging.info("post batch proccess | result: fail")
+            raise RuntimeError("Error in post batch process")
 
     def __accept_new_connection(self):
         """ 
@@ -117,9 +139,10 @@ class Server:
 
         Method to close server socket and client socket if posible
         """
-        self.running = False
+        self._running = False
         try:
-            for socket in self.clients_socket.values():
+            # Close all client sockets
+            for socket in self._clients_socket.values():
                 if socket:
                     socket.close()
             logging.info("action: shutdown | result: success")
@@ -127,6 +150,7 @@ class Server:
         except OSError as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
+            # Close server socket
             if self._server_socket:
                 self._server_socket.close()
             logging.info("Server has been shutdown")

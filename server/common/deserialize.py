@@ -1,13 +1,13 @@
 
 from common.utils import *
+from common.constants import *
 import logging
 
 def receive_batch(client_sock):
     """
-    Recibe y deserializa un batch de apuestas desde un socket.
-    Retorna:
-      - lista de apuestas
-      - bandera de éxito total (True) o parcial/incompleto (False)
+    Receives a batch of bets from a client socket. And it returns:
+      - list of bets
+      - success: True if batch was received successfully, False otherwise
     """
     bets = []
     success = True
@@ -20,11 +20,13 @@ def receive_batch(client_sock):
         if not batch_size_raw or len(batch_size_raw) != FIELD_LENGTH_BYTES:
             return bets, success
         
+        # Numbers of bytes in the batch
+        batch_size = int.from_bytes(batch_size_raw, byteorder='big')
+
         # If batch size is 0, client has no more batches
-        if int.from_bytes(batch_size_raw, byteorder='big') == 0:
+        if batch_size == NO_MORE_BATCHES:
             return [], success
         
-        batch_size = int.from_bytes(batch_size_raw, byteorder='big')
         while batch_size > 0:
 
             bet_size_raw = receive_all(client_sock, FIELD_LENGTH_BYTES)
@@ -39,25 +41,33 @@ def receive_batch(client_sock):
                 success = False
                 return bets, success
 
+            # Deserialize bet
             bet = deserialize_bet(bet_raw)
+            # Append bet to list
             bets.append(bet)
+            # Decrease batch size remaining
             batch_size -= (FIELD_LENGTH_BYTES + bet_size)
 
     except RuntimeError as e:
-        logging.error(f"Error general en receive_batch: {e}")
+        logging.error(f"Error receiving or processing the batch: {e}")
         success = False
         return bets, success
 
     return bets, success
 
 def deserialize_bet(data):
+    """Deserializes a bet from a byte array and returns a Bet object."""
+
     bet_fields = []
     index = 0
-    for _ in range(6):  # Tenemos 6 campos en cada apuesta
+    for _ in range(NUMBER_BET_ATTRIBUTES):
+        # Read field length
         field_length = int.from_bytes(data[index:index+FIELD_LENGTH_BYTES], byteorder="big")
         index += 2
+        # Read field value
         field_value = data[index:index+field_length].decode("utf-8")
         index += field_length
+        # Append field value to bet_fields
         bet_fields.append(field_value)
     
     bet = Bet(*bet_fields)
@@ -74,64 +84,67 @@ def receive_all(client_socket, bytes_to_receive):
 
         if not packet:
             return None  # Cliente cerró conexión normalmente
-
         data += packet
     return data
 
 def receive_winners_request(client_sock):
+    """Recives a request from client to inform winners and returns the agency id"""
     try:
-        # Verificamos operacion
+        # Verify operation
         operation = receive_all(client_sock, OPPERATION_FIELD_LENGTH)
         if not operation or len(operation) != OPPERATION_FIELD_LENGTH or int.from_bytes(operation, 'big') != REQUEST_WINNERS_AGENCY_ACTION:
-            logging.error("Error al recibir operacion")
+            logging.error("Error receiving operation")
             return None
         
-        # Recibimos longitud de bytes de id de agencia
+        # Receive agency id length
         len_id_raw = receive_all(client_sock, FIELD_LENGTH_BYTES)
         if not len_id_raw or len(len_id_raw) != FIELD_LENGTH_BYTES:
             logging.error("Error al recibir la longitud del id de agencia")
             return None
         
-        # Recibimos id de agencia
+        # Process agency id
         id_agency_raw = receive_all(client_sock, int.from_bytes(len_id_raw, 'big'))
         if not id_agency_raw or len(id_agency_raw) != int.from_bytes(len_id_raw, 'big'):
-            logging.error("Error al recibir id de agencia")
+            logging.error("Error receiving agency id")
             return None
         
         # Retornamos id de agencia
-        id_agencia = id_agency_raw.decode('utf-8')
-        return int(id_agencia)
+        id_agency = id_agency_raw.decode('utf-8')
+        return int(id_agency)
     
     except RuntimeError as e:
-        logging.error(f"Error general en receive_winners_request: {e}")
-        return None
+        logging.error(f"Error receiving winners request: {e}")
+        raise e
     
 def handshake(socket):
+    """ Handshake with client to receive client id"""
     try:
         len_id_raw = receive_all(socket, FIELD_LENGTH_BYTES)
         if not len_id_raw or len(len_id_raw) != FIELD_LENGTH_BYTES:
-            logging.error("Error en handshake al recibir la longitud del id de cliente")
+            logging.error("Error receiving client id length")
             return None
         len_id = int.from_bytes(len_id_raw, 'big')
 
+        # Process id client
         id_raw = receive_all(socket, len_id)
         if not id_raw or len(id_raw) != len_id:
-            logging.error("Error wn handshake al recibir el id de cliente")
+            logging.error("Error receiving client id")
             return None
-        
         id = id_raw.decode('utf-8')
+        # return client id as int
         return int(id)
     except:
-        logging.error("Error en handshake")
-        return None
+        logging.error("Error in handshake")
+        raise RuntimeError("Error in handshake")
     
 def receive_ack(socket):
+    """ Receive ACK from client"""
     try:
         ack_raw = receive_all(socket, ACK_LENGTH)
         if not ack_raw or len(ack_raw) != ACK_LENGTH:
-            logging.error("Error al recibir ACK")
+            logging.error("Error receiving ACK")
             return False
         return ack_raw.decode('utf-8') == "ACK\n"
     except:
-        logging.error("Error al recibir ACK")
-        return False
+        logging.error("Error receiving ACK")
+        raise RuntimeError("Error  receiving ACK")
