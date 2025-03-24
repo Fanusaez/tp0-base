@@ -3,6 +3,7 @@ import logging
 from common.utils import *
 from common.deserialize import *
 from common.serialize import *
+import time
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -72,6 +73,8 @@ class Server:
         self.current_client_id = None
 
         if len(self.finished_clients) == 5:
+            # dormir 1 seg
+            time.sleep(1)
             logging.info("action: sorteo | result: success")
             for i in range(1, 6):
                 winners = get_winners_bet(i)
