@@ -123,7 +123,7 @@ func (c *Client) StartClientLoop() {
 		log.Errorf("action: consulta_ganadores | result: fail | error: %v", err)
 		return
 	}
-	
+
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
 
 	err = c.sendAck()
@@ -193,5 +193,4 @@ func (c *Client) Close() {
 		c.conn.Close()
 		c.conn = nil
 	}
-	os.Exit(0)
 }
