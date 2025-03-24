@@ -7,14 +7,15 @@
 import logging
 
 def send_winners(socket, winners_bet):
-    """client_sock.close()client_sock.close()client_sock.close()client_sclient_sock.close()client_sock.close()ock.close().close()ock.close().close()ock.close()
-    Send winners bets to client
+    """
+    Serialize and send winners documents to client
     """
     response = b""
     try:
-        # Escribir la cantidad de ganadores (2 bytes)
+        # Add number of winners
         response += len(winners_bet).to_bytes(2, byteorder="big")
 
+        # For each winner, add: DNI length and DNI(string)
         for bet in winners_bet:
             dni_bytes = bet.document.encode("utf-8")
             response += len(dni_bytes).to_bytes(2, byteorder="big")  # tamaño del DNI
@@ -53,3 +54,13 @@ def send_all(socket, data):
     except:
         logging.error(f"Error sending winners")
         raise RuntimeError("Error sending winners")
+    
+def send_ack(socket):
+    """
+    Send ACK to client
+    """
+    try:
+        send_all(socket, b"ACK\n")
+    except:
+        logging.error(f"Error sending ACK")
+        raise RuntimeError("Error sending ACK")

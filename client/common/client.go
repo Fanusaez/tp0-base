@@ -83,7 +83,14 @@ func (c *Client) StartClientLoop() {
 	c.createClientSocket()
 
 	// Handshake: send ID
-	Handshake(c.conn, c.config.ID)
+	err := Handshake(c.conn, c.config.ID)
+	if err != nil {
+		log.Errorf("action: send_message_handshake | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+		return
+	}
 
 	for i := 0; i < len(all_batches); i++ {
 
@@ -101,11 +108,18 @@ func (c *Client) StartClientLoop() {
 		}
 
 		// Receive ACK from server (4 bytes "ACK\n")
-		c.reciveAck()
+		err = c.reciveAck()
+		if err != nil {
+			log.Errorf("action: receive ack | result: fail | client_id: %v | error: %v",
+				c.config.ID,
+				err,
+			)
+			return
+		}
 	}
 
 	// Sends message to signal no more batchs
-	err := SendAll(c.conn, []byte{0x00, 0x00})
+	err = SendAll(c.conn, []byte{0x00, 0x00})
 	if err != nil {
 		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
@@ -189,7 +203,6 @@ func (c *Client) sendAck() error {
 // Close cierra la conexión del cliente de forma segura
 func (c *Client) Close() {
 	if c.conn != nil {
-		//log.Infof("action: exit | result: success")
 		c.conn.Close()
 		c.conn = nil
 	}

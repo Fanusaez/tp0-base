@@ -58,8 +58,8 @@ class Server:
                 
                 # Batch received
                 elif success:
-                    #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
-                    client_sock.sendall("ACK\n".encode("utf-8"))
+                    logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
+                    send_ack(client_sock)
                     store_bets(bets)
 
                 # Error receiving batch
