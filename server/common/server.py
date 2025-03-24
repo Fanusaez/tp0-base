@@ -55,7 +55,7 @@ class Server:
                 
                 # Batch received
                 elif success:
-                    logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
+                    #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
                     # Send Ack
                     client_sock.sendall("ACK\n".encode("utf-8"))
 
@@ -79,7 +79,7 @@ class Server:
 
         if len(self.finished_clients) == 5:
             # dormir 1 seg
-            time.sleep(1)
+            #time.sleep(1)
             logging.info("action: sorteo | result: success")
             for i in range(1, 6):
                 winners = get_winners_bet(i)
