@@ -40,8 +40,8 @@ class Server:
                     self._current_client_id = client_id
                     self._client_socket = client_socket
                     self.__handle_client_connection(client_socket)
-            except:
-                self.shutdown()
+            except RuntimeError as e:
+                logging.error(f"Error in server: {e}")
 
     def __handle_client_connection(self, client_sock):
         """
@@ -94,7 +94,6 @@ class Server:
             # Receive ACK from client
             if not receive_ack(self._client_socket):
                 logging.info("action: receive_ack | result: fail")
-                return
 
             # Client finished sending batches, add it to finished clients
             if self._current_client_id not in self._finished_clients:
@@ -105,7 +104,7 @@ class Server:
                 # WARNING: This sleep is only so the logs are printed in test cases
                 # Without this sleep, the logs are printed after the test case finishes
                 # However logs are printed correcly in local machine
-                #time.sleep(1)
+                time.sleep(1)
 
                 logging.info("action: sorteo | result: success")
                 for i in range(1, self._cant_clientes + 1):
@@ -114,10 +113,8 @@ class Server:
                     # Wait for ACK
                     if not receive_ack(self._clients_socket[i]):
                         logging.error("action: receive_ack | result: fail")
-                        return
-                # Close server
                 self.shutdown()
-        except:
+        except RuntimeError as e:
             logging.info("post batch proccess | result: fail")
             raise RuntimeError("Error in post batch process")
 

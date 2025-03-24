@@ -67,7 +67,7 @@ func (c *Client) StartClientLoop() {
 
 	// Capturar SIGTERM
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGTERM)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 
 	// Goroutine para manejar SIGTERM
 	go func() {
@@ -165,6 +165,7 @@ func (c *Client) StartClientLoop() {
 	}
 	// Close the connection
 	c.Close()
+	os.Exit(0)
 }
 
 func (c *Client) reciveAck() error {
