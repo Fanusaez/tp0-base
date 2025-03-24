@@ -11,6 +11,9 @@ OPPERATION_FIELD_LENGTH = 1
 # Protocol instruction codes
 REQUEST_WINNERS_AGENCY_ACTION = 0x03
 
+# ACK length
+ACK_LENGTH = 4
+
 """ Bets storage location. """
 STORAGE_FILEPATH = "./bets.csv"
 """ Simulated winner number in the lottery contest. """

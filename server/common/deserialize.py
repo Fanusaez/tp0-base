@@ -124,3 +124,14 @@ def handshake(socket):
     except:
         logging.error("Error en handshake")
         return None
+    
+def receive_ack(socket):
+    try:
+        ack_raw = receive_all(socket, ACK_LENGTH)
+        if not ack_raw or len(ack_raw) != ACK_LENGTH:
+            logging.error("Error al recibir ACK")
+            return False
+        return ack_raw.decode('utf-8') == "ACK\n"
+    except:
+        logging.error("Error al recibir ACK")
+        return False

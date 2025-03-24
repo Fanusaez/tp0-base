@@ -123,6 +123,8 @@ func (c *Client) StartClientLoop() {
 
 	var _ []string = ReceiveWinners(c.conn)
 
+	c.sendAck()
+
 	// Close the connection
 	c.Close()
 }
@@ -141,6 +143,18 @@ func (c *Client) reciveAck() {
 	if string(ack) != "ACK\n" {
 		log.Errorf("action: receive_message | result: fail | client_id: %v | error: invalid ack",
 			c.config.ID,
+		)
+		return
+	}
+}
+
+func (c *Client) sendAck() {
+	// Send ACK to client (4 bytes "ACK\n")
+	err := SendAll(c.conn, []byte("ACK\n"))
+	if err != nil {
+		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
 		)
 		return
 	}
