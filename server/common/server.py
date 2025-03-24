@@ -73,7 +73,7 @@ class Server:
 
         if len(self.finished_clients) == 5:
             # dormir 1 seg
-            time.sleep(1)
+            #time.sleep(1)
             for i in range(1, 6):
                 winners = get_winners_bet(i)
                 logging.info("action: sorteo | result: success")
@@ -81,7 +81,7 @@ class Server:
                 if receive_ack(self.clients_socket[i]):
                     logging.info(f"action: ack_winners | result: success")
                     self.clients_socket[i].close()
-
+            self._client_socket = None
             self.shutdown()
 
 
