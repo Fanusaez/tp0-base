@@ -4,6 +4,7 @@ from common.utils import *
 from common.deserialize import *
 from common.serialize import *
 import time
+import sys
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -108,10 +109,20 @@ class Server:
             if self._client_socket:
                 self._client_socket.close()
             logging.info("action: shutdown | result: success")
+
+            # Forzar flush a stdout/stderr
+            for handler in logging.root.handlers:
+                handler.flush()
+            sys.stdout.flush()
+            sys.stderr.flush()
+
         except OSError as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
             self._server_socket.close()
             logging.info("Server has been shutdown")
+            for handler in logging.root.handlers:
+                handler.flush()
+
 
         
