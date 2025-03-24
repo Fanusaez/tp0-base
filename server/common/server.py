@@ -69,7 +69,6 @@ class Server:
         # Client finished sending batches
         if self.current_client_id not in self.finished_clients:
             self.finished_clients.append(self.current_client_id)
-        self.current_client_id = None
 
         if len(self.finished_clients) == 5:
             # dormir 1 seg
