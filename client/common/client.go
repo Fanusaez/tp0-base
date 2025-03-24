@@ -120,11 +120,10 @@ func (c *Client) StartClientLoop() {
 	// Recive and print winner
 	var numberWinners int = ReceiveNumberOfWinners(c.conn)
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", numberWinners)
-
+	c.sendAck()
 	var _ []string = ReceiveWinners(c.conn)
 
 	c.sendAck()
-
 	// Close the connection
 	c.Close()
 }

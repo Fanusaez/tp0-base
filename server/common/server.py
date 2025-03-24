@@ -68,6 +68,8 @@ class Server:
         winners = get_winners_bet(agency_id)
         send_number_of_winners(client_sock, len(winners))
 
+        receive_ack(client_sock)
+        
         # Client finished sending batches
         if self.current_client_id not in self.finished_clients:
             self.finished_clients.append(self.current_client_id)
@@ -75,9 +77,9 @@ class Server:
         if len(self.finished_clients) == 5:
             # dormir 1 seg
             #time.sleep(1)
+            logging.info("action: sorteo | result: success")
             for i in range(1, 6):
                 winners = get_winners_bet(i)
-                logging.info("action: sorteo | result: success")
                 send_winners(self.clients_socket[i], winners)
                 if receive_ack(self.clients_socket[i]):
                     logging.info(f"action: ack_winners | result: success")
