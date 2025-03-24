@@ -81,10 +81,7 @@ class Server:
             for i in range(1, 6):
                 winners = get_winners_bet(i)
                 send_winners(self.clients_socket[i], winners)
-                if receive_ack(self.clients_socket[i]):
-                    logging.info(f"action: ack_winners | result: success")
-                    self.clients_socket[i].close()
-            self._client_socket = None
+                receive_ack(self.clients_socket[i])
             self.shutdown()
 
 
@@ -108,23 +105,15 @@ class Server:
         """
         self.running = False
         try:
-            if self._client_socket:
-                self._client_socket.close()
+            for socket in self.clients_socket.values():
+                socket.close()
             logging.info("action: shutdown | result: success")
-
-            # Forzar flush a stdout/stderr
-            for handler in logging.root.handlers:
-                handler.flush()
-            sys.stdout.flush()
-            sys.stderr.flush()
-
+            
         except OSError as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
             self._server_socket.close()
             logging.info("Server has been shutdown")
-            for handler in logging.root.handlers:
-                handler.flush()
 
 
         
