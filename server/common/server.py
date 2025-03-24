@@ -56,7 +56,7 @@ class Server:
                 
                 # Batch received
                 elif success:
-                    logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
+                    #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
                     # Send Ack
                     client_sock.sendall("ACK\n".encode("utf-8"))
 
@@ -67,12 +67,15 @@ class Server:
 
         except OSError as e:
             logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
+
         try:
             agency_id = receive_winners_request(client_sock)
             winners = get_winners_bet(agency_id)
             send_number_of_winners(client_sock, len(winners))
 
-            receive_ack(client_sock)
+            if not receive_ack(client_sock):
+                logging.info("action: receive_ack | result: fail")
+                return
         
             # Client finished sending batches
             if self.current_client_id not in self.finished_clients:
@@ -82,12 +85,14 @@ class Server:
                 # dormir 1 seg
                 #time.sleep(1)
                 logging.info("action: sorteo | result: success")
-                for i in range(1, 6):
+                for i in range(1, self.cant_clientes + 1):
                     winners = get_winners_bet(i)
                     send_winners(self.clients_socket[i], winners)
-                    receive_ack(self.clients_socket[i])
+                    if not receive_ack(self.clients_socket[i]):
+                        logging.info("action: receive_ack | result: fail")
+                        return
                 self.shutdown()
-        except OSError as e:
+        except:
             logging.info(f"action: sorteo | result: fail")
             self.shutdown()
 
