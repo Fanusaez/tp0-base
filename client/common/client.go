@@ -124,7 +124,7 @@ func (c *Client) StartClientLoop() {
 	// Recive and print winner
 	numberWinners, err := ReceiveNumberOfWinners(c.conn)
 	if err != nil {
-		log.Errorf("action: consulta_ganadores | result: fail | error: %v", err)
+		log.Errorf("action: consulta_cantidad_ganadores | result: fail | error: %v", err)
 		return
 	}
 

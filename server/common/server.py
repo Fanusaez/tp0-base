@@ -3,8 +3,8 @@ import logging
 from common.utils import *
 from common.deserialize import *
 from common.serialize import *
-import time
-import threading
+import multiprocessing
+from multiprocessing import Manager
 
 class Server:
     def __init__(self, port, listen_backlog, cant_clientes):
@@ -14,12 +14,14 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._running = True
         self._clients_socket = {}
-        self._finished_clients = []
         self._cant_clientes = cant_clientes
-        self._lock_fclients = threading.Lock()
-        self._lock_bets = threading.Lock()
-        self._threads = []
-        self._thread_sort = None
+        self._count_down = cant_clientes
+
+        manager = multiprocessing.Manager()
+        self._lock_fclients = manager.Lock()
+        self._lock_bets = manager.Lock()
+
+        self._processes = []
 
     def run(self):
         """
@@ -30,12 +32,15 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        while self._running:
+        while self._running and self._count_down > 0:
             try:
                 client_socket = self.__accept_new_connection()
                 if not client_socket:
                     continue
                 
+                # Update number of clients (see better solution)
+                self._count_down -= 1
+
                 # Handshake with client
                 client_id = handshake(client_socket)
 
@@ -44,87 +49,24 @@ class Server:
                     self._clients_socket[client_id] = client_socket
 
                 # Start thread to handle client
-                thread = threading.Thread(
-                    target=self.__handle_client_thread,
-                    args=(client_id, client_socket)
-                )
-                thread.start()
-                self._threads.append(thread)
+                p = multiprocessing.Process(
+                    target=handle_client_process,
+                    args=(client_socket, self._lock_bets)
+                    )
+                p.start()
+                self._processes.append(p)
             
             except OSError as e:
                 logging.Info(f"ERROR in server: {e}")
                 break 
 
-        # Join all threads
-        for thread in self._threads:
-            thread.join()
-        
-        # Join the sorting thread if it exists
-        if self._thread_sort is not None:
-            self._thread_sort.join()
+        # Esperar a que todos terminen
+        for p in self._processes:
+            p.join()
 
+        # Realizar sorteo y enviar ganadores
+        self.__handle_agencies_sort()
 
-    def __handle_client_thread(self, client_id, client_sock):
-        """
-        Handle client connection, receving all batches from client
-        and store them in database
-        """
-        try:
-            while True:
-                bets, success = receive_batch(client_sock)
-
-                # No more batchs, exit loop
-                if not bets and success:
-                    self.__handle_post_batch_process(client_id, client_sock)
-                    break
-                
-                # Batch received
-                elif success:
-                    logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
-                    send_ack(client_sock)
-                    with self._lock_bets:
-                        store_bets(bets)
-
-                # Error receiving batch
-                else:
-                    logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
-                    break
-        
-        except OSError as e:
-            logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
-            raise RuntimeError("Error receiving batch")
-
-    def __handle_post_batch_process(self, client_id, client_socket):
-        """
-        Handle post batch process:
-            - Receives winners request
-            - Sends numebrs of winners to client
-            - Sends winners to client after all of them finished sending batches
-        """
-        try:
-            # Receive client int ID
-            agency_id = receive_winners_request(client_socket)
-            with self._lock_bets:
-                winners = get_winners_bet(agency_id)
-            send_number_of_winners(client_socket, len(winners))
-
-            # Receive ACK from client
-            if not receive_ack(client_socket):
-                logging.info("action: receive_ack | result: fail")
-
-            # Client finished sending batches, add it to finished clients
-            with self._lock_fclients:
-                self._finished_clients.append(client_id)
-                # Check if all clients finished sending batches
-                if len(self._finished_clients) >= self._cant_clientes:
-                    # Start thread to inform different agencies their winners
-                    thread = threading.Thread(target=self.__handle_agencies_sort)
-                    self._thread_sort = thread
-                    thread.start()
-
-        except RuntimeError as e:
-            logging.info("post batch proccess | result: fail")
-            raise RuntimeError("Error in post batch process")
 
     def __handle_agencies_sort(self):
         """tbw"""
@@ -180,4 +122,55 @@ class Server:
             logging.info("Server has been shutdown")
 
 
-        
+def handle_client_process(client_sock, lock_bets):
+    """
+    Handle client connection, receving all batches from client
+    and store them in database
+    """
+    try:
+        while True:
+            bets, success = receive_batch(client_sock)
+
+            # No more batchs, exit loop
+            if not bets and success:
+                handle_post_batch_process(client_sock, lock_bets)
+                break
+            
+            # Batch received
+            elif success:
+                #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
+                send_ack(client_sock)
+                with lock_bets:
+                    store_bets(bets)
+
+            # Error receiving batch
+            else:
+                logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
+                break
+    
+    except OSError as e:
+        logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
+        raise RuntimeError("Error receiving batch")
+
+
+def handle_post_batch_process(client_socket, lock_bets):
+    """
+    Handle post batch process:
+        - Receives winners request
+        - Sends numebrs of winners to client
+        - Sends winners to client after all of them finished sending batches
+    """
+    try:
+        # Receive client int ID
+        agency_id = receive_winners_request(client_socket)
+        with lock_bets:
+            winners = get_winners_bet(agency_id)
+        send_number_of_winners(client_socket, len(winners))
+
+        # Receive ACK from client
+        if not receive_ack(client_socket):
+            logging.info("action: receive_ack | result: fail")
+
+    except RuntimeError as e:
+        logging.info("post batch proccess | result: fail")
+        raise RuntimeError("Error in post batch process")

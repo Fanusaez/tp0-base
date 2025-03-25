@@ -16,7 +16,6 @@ func ReceiveWinners(socket net.Conn) ([]string, error) {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 2)
 	if err != nil {
-		log.Errorf("Error al recibir la cantidad de ganadores: %v", err)
 		return nil, err
 	}
 	// Convert the amount of winners to int
@@ -27,7 +26,6 @@ func ReceiveWinners(socket net.Conn) ([]string, error) {
 		// Recive the winner
 		winnerDniLenghtRaw, err := ReciveAll(socket, ProtocolFieldLength)
 		if err != nil {
-			log.Errorf("Error al recibir el ganador: %v", err)
 			return nil, err
 		}
 		winnerDniLenght := binary.BigEndian.Uint16(winnerDniLenghtRaw)
@@ -44,7 +42,6 @@ func ReceiveNumberOfWinners(socket net.Conn) (int, error) {
 	// Recive the amount of winners
 	amountWinnersRaw, err := ReciveAll(socket, 4)
 	if err != nil {
-		log.Errorf("Error al recibir la cantidad de ganadores: %v", err)
 		return 0, err
 	}
 	// Convert the amount of winners to int
@@ -56,9 +53,6 @@ func ReciveAck(conn net.Conn) error {
 	// Receive ACK from server (4 bytes "ACK\n")
 	ack, err := ReciveAll(conn, AckSize)
 	if err != nil {
-		log.Errorf("action: receive_mess2age | result: fail | error: %v",
-			err,
-		)
 		return err
 	}
 
