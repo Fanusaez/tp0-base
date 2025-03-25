@@ -73,7 +73,6 @@ class Server:
         """tbw"""
         try: 
             logging.info("action: sorteo | result: success")
-            sleep(1)
             # For each client, send winners
             for i in range(1, self._cant_clientes + 1):
                 winners_document = get_winners_bet(i)
@@ -83,6 +82,7 @@ class Server:
                 if not receive_ack(self._clients_socket[i]):
                     logging.error("action: receive_ack | result: fail")
 
+            sleep(3)
             self.shutdown()
 
         except RuntimeError as e:
