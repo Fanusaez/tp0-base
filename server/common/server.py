@@ -5,6 +5,7 @@ from common.deserialize import *
 from common.serialize import *
 import multiprocessing
 from multiprocessing import Manager
+from time import sleep
 
 class Server:
     def __init__(self, port, listen_backlog, cant_clientes):
@@ -81,6 +82,9 @@ class Server:
                 # Wait for ACK
                 if not receive_ack(self._clients_socket[i]):
                     logging.error("action: receive_ack | result: fail")
+
+            # Sleep so loggin can be printed
+            sleep(1)
 
             self.shutdown()
 
