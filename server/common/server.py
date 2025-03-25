@@ -70,7 +70,7 @@ class Server:
                 
                 # Batch received
                 elif success:
-                    #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
+                    logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
                     send_ack(client_sock)
                     with self._lock_bets:
                         store_bets(bets)
