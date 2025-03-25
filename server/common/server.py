@@ -138,7 +138,7 @@ def handle_client_process(client_sock, lock_bets):
             
             # Batch received
             elif success:
-                #logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
+                logging.info("action: apuesta_recibida | result: success | cantidad: %d", len(bets))
                 send_ack(client_sock)
                 with lock_bets:
                     store_bets(bets)
