@@ -48,6 +48,6 @@ def load_bets() -> list[Bet]:
         for row in reader:
             yield Bet(row[0], row[1], row[2], row[3], row[4], row[5])
 
-
+"""Gets the winners of a specific agency. Not Thread Safe"""
 def get_winners_bet(agency_id: int):
     return [bet for bet in load_bets() if has_won(bet) and bet.agency == agency_id]
