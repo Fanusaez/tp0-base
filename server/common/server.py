@@ -19,6 +19,7 @@ class Server:
         self._lock_fclients = threading.Lock()
         self._lock_bets = threading.Lock()
         self._threads = []
+        self._thread_sort = None
 
     def run(self):
         """
@@ -29,7 +30,7 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        while self._running :
+        while self._running:
             try:
                 client_socket = self.__accept_new_connection()
                 if not client_socket:
@@ -45,15 +46,24 @@ class Server:
                 # Start thread to handle client
                 thread = threading.Thread(
                     target=self.__handle_client_thread,
-                    args=(client_id, client_socket),
-                    daemon=True
+                    args=(client_id, client_socket)
                 )
                 thread.start()
                 self._threads.append(thread)
             
-            except RuntimeError as e:
-                logging.error(f"Error in server: {e}")
-                
+            except OSError as e:
+                logging.Info(f"ERROR in server: {e}")
+                break 
+
+        # Join all threads
+        for thread in self._threads:
+            thread.join()
+        
+        # Join the sorting thread if it exists
+        if self._thread_sort is not None:
+            self._thread_sort.join()
+
+
     def __handle_client_thread(self, client_id, client_sock):
         """
         Handle client connection, receving all batches from client
@@ -107,7 +117,10 @@ class Server:
                 self._finished_clients.append(client_id)
                 # Check if all clients finished sending batches
                 if len(self._finished_clients) >= self._cant_clientes:
-                    threading.Thread(target=self.__handle_agencies_sort, daemon=True).start()
+                    # Start thread to inform different agencies their winners
+                    thread = threading.Thread(target=self.__handle_agencies_sort)
+                    self._thread_sort = thread
+                    thread.start()
 
         except RuntimeError as e:
             logging.info("post batch proccess | result: fail")
@@ -117,28 +130,34 @@ class Server:
         """tbw"""
         try: 
             logging.info("action: sorteo | result: success")
+
+            # For each client, send winners
             for i in range(1, self._cant_clientes + 1):
                 winners_document = get_winners_bet(i)
                 send_winners(self._clients_socket[i], winners_document)
+
                 # Wait for ACK
                 if not receive_ack(self._clients_socket[i]):
                     logging.error("action: receive_ack | result: fail")
+
             self.shutdown()
+
         except RuntimeError as e:
             logging.info("sort proccess | result: fail")
             raise RuntimeError("Error in sort process")
 
     def __accept_new_connection(self):
-        """ 
-        Accept new connections with proper error handling 
-        """
         logging.info('action: accept_connections | result: in_progress')
         try:
+            self._server_socket.settimeout(1.0)  # timeout de 1 segundo
             c, addr = self._server_socket.accept()
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
             return c
-        except OSError as e:
-            return None  # Retorna None si el socket se cerró
+        except socket.timeout:
+            return None
+        except OSError:
+            return None
+
     
     def shutdown(self):
         """
@@ -152,9 +171,6 @@ class Server:
             for socket in self._clients_socket.values():
                 if socket:
                     socket.close()
-            logging.info("action: shutdown | result: success")
-            for thread in self._threads:
-                thread.join()
         except OSError as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
         finally:
