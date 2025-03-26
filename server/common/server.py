@@ -73,8 +73,6 @@ class Server:
         """tbw"""
         try: 
             logging.info("action: sorteo | result: success")
-
-            sleep(3)
             
             # For each client, send winners
             for i in range(1, self._cant_clientes + 1):

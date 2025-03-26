@@ -145,6 +145,9 @@ func (c *Client) StartClientLoop() {
 	}
 	log.Infof("action: recibir_ganadores | result: success | ganadores: %v", winners)
 
+	// sleep
+	time.Sleep(3 * time.Second)
+
 	err = SendAck(c.conn)
 	if err != nil {
 		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
