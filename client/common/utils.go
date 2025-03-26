@@ -12,6 +12,7 @@ const MaxBytesBatch = 8000 // 8kb
 const AckSize = 4
 
 const AskForWinnerInstruction = 0x03
+var NoMoreBatchesInstruction = []byte{0x00, 0x00}
 
 // Sends a message to the server
 func SendAll(socket net.Conn, data []byte) error {

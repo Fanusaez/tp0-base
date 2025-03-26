@@ -62,33 +62,12 @@ class Server:
                 logging.Info(f"ERROR in server: {e}")
                 break 
 
-        # Esperar a que todos terminen
+        # Join all processes
         for p in self._processes:
             p.join()
 
-        # Realizar sorteo y enviar ganadores
+        # Shutdown server
         self.shutdown()
-
-
-    def __handle_agencies_sort(self):
-        """tbw"""
-        try: 
-            logging.info("action: sorteo | result: success")
-            
-            # For each client, send winners
-            for i in range(1, self._cant_clientes + 1):
-                winners_document = get_winners_bet(i)
-                send_winners(self._clients_socket[i], winners_document)
-
-                # Wait for ACK
-                if not receive_ack(self._clients_socket[i]):
-                    logging.error("action: receive_ack | result: fail")
-
-            self.shutdown()
-
-        except RuntimeError as e:
-            logging.info("sort proccess | result: fail")
-            raise RuntimeError("Error in sort process")
 
     def __accept_new_connection(self):
         logging.info('action: accept_connections | result: in_progress')

@@ -109,7 +109,7 @@ func (c *Client) StartClientLoop() {
 	}
 
 	// Sends message to signal no more batchs
-	err = SendAll(c.conn, []byte{0x00, 0x00})
+	err = SendAll(c.conn, NoMoreBatchesInstruction)
 	if err != nil {
 		log.Errorf("action: send_message | result: fail | client_id: %v | error: %v",
 			c.config.ID,
