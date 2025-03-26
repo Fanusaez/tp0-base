@@ -21,6 +21,7 @@ class Server:
         manager = multiprocessing.Manager()
         self._lock_fclients = manager.Lock()
         self._lock_bets = manager.Lock()
+        self._barrier = manager.Barrier(cant_clientes)
 
         self._processes = []
 
@@ -52,7 +53,7 @@ class Server:
                 # Start thread to handle client
                 p = multiprocessing.Process(
                     target=handle_client_process,
-                    args=(client_socket, self._lock_bets)
+                    args=(client_socket, client_id, self._lock_bets, self._barrier)
                     )
                 p.start()
                 self._processes.append(p)
@@ -66,7 +67,7 @@ class Server:
             p.join()
 
         # Realizar sorteo y enviar ganadores
-        self.__handle_agencies_sort()
+        self.shutdown()
 
 
     def __handle_agencies_sort(self):
@@ -123,7 +124,7 @@ class Server:
             logging.info("Server has been shutdown")
 
 
-def handle_client_process(client_sock, lock_bets):
+def handle_client_process(client_sock, client_id, lock_bets, barrier):
     """
     Handle client connection, receving all batches from client
     and store them in database
@@ -135,6 +136,8 @@ def handle_client_process(client_sock, lock_bets):
             # No more batchs, exit loop
             if not bets and success:
                 handle_post_batch_process(client_sock, lock_bets)
+                barrier.wait()
+                handle_agencies_sort(client_sock, client_id, lock_bets)
                 break
             
             # Batch received
@@ -148,6 +151,7 @@ def handle_client_process(client_sock, lock_bets):
             else:
                 logging.info(f"action: apuesta_recibida | result: fail | cantidad: {len(bets)}")
                 break
+        
     
     except OSError as e:
         logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
@@ -175,3 +179,22 @@ def handle_post_batch_process(client_socket, lock_bets):
     except RuntimeError as e:
         logging.info("post batch proccess | result: fail")
         raise RuntimeError("Error in post batch process")
+    
+
+def handle_agencies_sort(client_socket, client_id, lock_bets):
+    """Get from id and send winners to client"""
+    try: 
+        logging.info("action: sorteo | result: success")
+        
+        # Send winners
+        with lock_bets:
+            winners_document = get_winners_bet(client_id)
+        send_winners(client_socket, winners_document)
+
+        # Wait for ACK
+        if not receive_ack(client_socket):
+            logging.error("action: receive_ack | result: fail")
+
+    except RuntimeError as e:
+        logging.info("sort proccess | result: fail")
+        raise RuntimeError("Error in sort process")
