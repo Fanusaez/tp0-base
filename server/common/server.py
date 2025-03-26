@@ -101,11 +101,6 @@ class Server:
 
             if len(self._finished_clients) >= self._cant_clientes:
 
-                # WARNING: This sleep is only so the logs are printed in test cases
-                # Without this sleep, the logs are printed after the test case finishes
-                # However logs are printed correcly in local machine
-                time.sleep(1)
-
                 logging.info("action: sorteo | result: success")
                 for i in range(1, self._cant_clientes + 1):
                     winners_document = get_winners_bet(i)
