@@ -55,7 +55,7 @@ Este test se ejecuta completamente dentro de la red virtual de Docker, sin expon
 
 ### Ejercicio 5
 
-Protocolo utilizado:
+Protocolo utilizado para enviar la Bet:
 
 - Cliente:
     * 2 Bytes para indicar longitud del campo a recibir (bigendian)
@@ -67,7 +67,7 @@ Protocolo utilizado:
 
 ### Ejercicio 6
 
-Protocolo utilizado para la serializacion de batches:
+__Protocolo utilizado para la serializacion de batches__:
 
 - Cliente: 
     * 2 bytes para indicar la cantidad de bytes a leer (tamaño del batch)
@@ -84,9 +84,9 @@ Este protocolo fue levemente modificado para el ejercicio 7
 
 ### Ejercicio 7
 
- Cliente: 
-    Para el envio de los batches
+ Protocolos Cliente: 
 
+- __Para el envio de los batches:__
 
     * 2 bytes para indicar la cantidad de bytes a leer (tamaño del batch)
 
@@ -96,9 +96,17 @@ Este protocolo fue levemente modificado para el ejercicio 7
     * Infomacion del campo 
     * Esto se repetia para cada campo (ID, Nombre, apellido, documento, numero)
 
-    Para el envio del ACK
+- __Para el envio del ACK:__
 
     * 4 bytes compuestos del string "ACK\n"
+
+- __Para informar que se enviaron todos los batches:__
+    * Entero de dos bytes con valor 0
+
+- __Para para pedir los ganadores:__
+    * 1 byte para indicar la instrucion
+    * 2 bytes para indicar la longitud del campo ID 
+    * n bytes para el campo id
 
 ## Parte 4
 
