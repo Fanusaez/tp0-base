@@ -19,7 +19,6 @@ class Server:
         self._count_down = cant_clientes
 
         manager = multiprocessing.Manager()
-        self._lock_fclients = manager.Lock()
         self._lock_bets = manager.Lock()
         self._barrier = manager.Barrier(cant_clientes)
 
