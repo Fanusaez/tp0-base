@@ -1,81 +1,73 @@
 # Trabajo Practico 0
 
-- Alumno: Edgardo Francisco Saez
-- Padron: 104896
+**Alumno:** Edgardo Francisco Saez  
+**Padrón:** 104896
+
+---
 
 ## Parte 1
 
 ### Ejercicio 1
 
-Para este ejercicio creamos un docker-compose.sh
+Se desarrolló el script `generar_compose.sh` que automatiza la generación del archivo `docker-compose-dev.yaml`.
 
-Para ejecutarlo primero ejecutar por consola:
+**Ejecución:**
 
 ```bash
 chmod +x generar_compose.sh
+./generar_compose.sh <nombre_archivo_salida> <cantidad_clientes>
 ```
 
-Posteriormente:
+Este script ejecuta un programa en Python que escribe dinámicamente el archivo deseado.
 
-```bash
-./generar-compose.sh <nombre_archivo_salida> <cantidad_clientes>
-```
-
-Dentro del mismo se ejecuta un script de python que escribe el archivo especificado.
 
 ### Ejercicio 2
 
-Inyecto en el archivo docker-compose-dev.yaml los archivos de configuracion para no tener que recontruir las imagenes de docker cada vez que se modifican los archivos
+Se configuró el `docker-compose-dev.yaml` para inyectar los archivos de configuración (como `config.yaml` o los datasets) mediante volúmenes, evitando así la reconstrucción de las imágenes en cada cambio.
 
 ### Ejercicio 3
-Para validar el correcto funcionamiento del servidor Echo, se provee un script de bash llamado validar_echo_server.sh.
+Se provee el script `validar_echo_server.sh` para validar que el servidor echo funcione correctamente.
 
-Para ejecutarlo primero ejecutar por consola:
+**Ejecución:**
 
 ```bash
 chmod +x validar_echo_server.sh
-```
-
-Posteriorimente:
-
-```bash
 ./validar_echo_server.sh
 ```
 
-Este test se ejecuta completamente dentro de la red virtual de Docker, sin exponer puertos al host. Para esto se lanza un contenedor temporal que utiliza la misma red que el servidor(testing_net) y se conecta usando netcat
+Este script se ejecuta completamente dentro de la red virtual de Docker (`testing_net`) sin exponer puertos al host. Para ello, lanza un contenedor temporal (`busybox`) que usa netcat (`nc`) para enviar y recibir un mensaje.
+
+---
 
 ### Ejercicio 4
 
-- Server:
-    Por el lado del server, lo que hacemos una vez catcheado el `SIGTERM` es:
+**Servidor (Python):**
 
-    1 - Llamar a la funcion `shutdown()` la cual cierra los recursos que estan abiertos (sockets del cliente y servidor)
+- Captura la señal `SIGTERM`.
+- Llama a la función `shutdown()` para cerrar los sockets del cliente y servidor.
+- Termina la ejecución con `sys.exit(0)`.
 
-    2 - Llamar a `sys.exit(0)` el cual detiene la ejecucion del programa
-    
-- Client:
+**Cliente (Go):**
 
-    1 - Creo un canal para poder recibir senales del sistema operativo
+- Se configura un canal para capturar señales del sistema.
+- Se lanza una goroutine que maneja estas señales (`SIGTERM`, `SIGINT`).
+- Cierra el socket con `Close()`, luego termina con `os.Exit(0)`.
 
-    2 - Congfiguro el canal para recibir senales como `syscall.SIGTERM`, `syscall.SIGINT`
-
-    3 - Se inicia una goroutine para manejar las senales recibidas
-
-    4 - Una vez se recibe, llamo a `Close()` (el cual cierra el socket del cliente), cierro el canal y realizo el `os.Exit(0)`
+---
 
 ## Parte 2
 
 ### Ejercicio 5
 
-Protocolo utilizado para enviar la Bet:
+**Protocolo para enviar apuesta (Bet):**
 
-- Cliente:
-    * 2 Bytes para indicar longitud del campo a recibir (bigendian)
-    * Informacion del campo (string)
-    * Esto se repetia para cada campo (ID, Nombre, apellido, documento, numero)
+- Por cada campo:
+  - 2 bytes con la longitud del campo (Big Endian).
+  - Campo serializado (en UTF-8).
 
-- Servidor:
-    * Deserealizada esta informaciion y la guardaba en una clase `Bet`
+**Del lado del servidor**, esta información se deserializa campo a campo para construir una instancia de `Bet`.
+
+---
 
 ### Ejercicio 6
 
@@ -86,7 +78,7 @@ __Protocolo utilizado para la serializacion de batches__:
 
     Y para cada bet del batch:
     * 2 bytes indicando el tamaño del campo a leer
-    * Infomacion del campo 
+    * Infomacion del campo (UTF-8)
     * Esto se repetia para cada campo (ID, Nombre, apellido, documento, numero)
 
 - Servidor:
@@ -120,12 +112,18 @@ Este protocolo fue levemente modificado para el ejercicio 7
     * 2 bytes para indicar la longitud del campo ID 
     * n bytes para el campo id
 
+---
+
 ## Parte 4
 
 ### Ejercicio 8
 
-Para este ejercicio utilizo procesos, exactamente uno por cliente.
-Cada proceso se encargara de los batches que envie cada cliente, tambien de procesarlos.
-Una vez terminado, se encontrara con una barrera del server que sincroniza todos los clientes para realizar el sorteo, para posterioirmente informar los DNI's de los ganadores a cada agencia.
-Una vez finalizado esto, el proceso principal realizara `join()` a cada proceso lanzado y finalizara llamando a `shutdown()`.
-Cabe resaltar la utilizacion de locks para sincronizar los hilos para la utilizacion de las funciones `load_bets()` y `get_winners_bet`
+PEl servidor fue modificado para usar **procesos** (uno por cliente). Cada proceso maneja la conexión, recibe las apuestas y responde al cliente.
+
+**Sincronización:**
+
+- Se utiliza una **barrera (Barrier)** para que todos los procesos esperen antes de iniciar el sorteo.
+- Se emplean **locks (multiprocessing.Lock)** para sincronizar el acceso a los recursos compartidos (`store_bets()` y `get_winners_bet()`).
+- Finalizado el sorteo, el proceso principal hace `join()` a los procesos hijos y llama a `shutdown()`.
+
+---
