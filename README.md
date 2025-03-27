@@ -37,8 +37,6 @@ chmod +x validar_echo_server.sh
 
 Este script se ejecuta completamente dentro de la red virtual de Docker (`testing_net`) sin exponer puertos al host. Para ello, lanza un contenedor temporal (`busybox`) que usa netcat (`nc`) para enviar y recibir un mensaje.
 
----
-
 ### Ejercicio 4
 
 **Servidor (Python):**
@@ -66,8 +64,6 @@ Este script se ejecuta completamente dentro de la red virtual de Docker (`testin
   - Campo serializado (en UTF-8).
 
 **Del lado del servidor**, esta información se deserializa campo a campo para construir una instancia de `Bet`.
-
----
 
 ### Ejercicio 6
 
