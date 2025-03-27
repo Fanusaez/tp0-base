@@ -9,7 +9,13 @@
 
 Para este ejercicio creamos un docker-compose.sh
 
-Para ejecutarlo:
+Para ejecutarlo primero ejecutar por consola:
+
+```bash
+chmod +x generar_compose.sh
+```
+
+Posteriormente:
 
 ```bash
 ./generar-compose.sh <nombre_archivo_salida> <cantidad_clientes>
@@ -24,7 +30,13 @@ Inyecto en el archivo docker-compose-dev.yaml los archivos de configuracion para
 ### Ejercicio 3
 Para validar el correcto funcionamiento del servidor Echo, se provee un script de bash llamado validar_echo_server.sh.
 
-Para ejecutarlo
+Para ejecutarlo primero ejecutar por consola:
+
+```bash
+chmod +x validar_echo_server.sh
+```
+
+Posteriorimente:
 
 ```bash
 ./validar_echo_server.sh
@@ -112,3 +124,8 @@ Este protocolo fue levemente modificado para el ejercicio 7
 
 ### Ejercicio 8
 
+Para este ejercicio utilizo procesos, exactamente uno por cliente.
+Cada proceso se encargara de los batches que envie cada cliente, tambien de procesarlos.
+Una vez terminado, se encontrara con una barrera del server que sincroniza todos los clientes para realizar el sorteo, para posterioirmente informar los DNI's de los ganadores a cada agencia.
+Una vez finalizado esto, el proceso principal realizara `join()` a cada proceso lanzado y finalizara llamando a `shutdown()`.
+Cabe resaltar la utilizacion de locks para sincronizar los hilos para la utilizacion de las funciones `load_bets()` y `get_winners_bet`
