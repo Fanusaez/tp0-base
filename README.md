@@ -112,6 +112,25 @@ Este protocolo fue levemente modificado para el ejercicio 7
     * 2 bytes para indicar la longitud del campo ID 
     * n bytes para el campo id
 
+- __Handshake__
+
+    * 2 bytes para indicar la cantidad de bytes a leer
+    * n bytes de id (UTF-8)
+
+
+Protocolos Servidor:
+
+- __Para el envio de la cantidad de clientes que ganaron la apuesta__
+
+    * 4 bytes (big endian)
+
+- __Para enviar los documento de los ganadores__ 
+
+    * 2 bytes indicando la cantidad de DNI's (big endian)
+    * Para cada uno de los documentos:
+    * 2 bytes indicando la cantidad de bytes que ocupa el DNI
+    * n bytes del documento(UTF-8)
+
 ---
 
 ## Parte 4
