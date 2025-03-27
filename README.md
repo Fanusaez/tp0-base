@@ -118,7 +118,7 @@ Este protocolo fue levemente modificado para el ejercicio 7
 
 ### Ejercicio 8
 
-PEl servidor fue modificado para usar **procesos** (uno por cliente). Cada proceso maneja la conexión, recibe las apuestas y responde al cliente.
+El servidor fue modificado para usar **procesos** (uno por cliente). Cada proceso maneja la conexión, recibe las apuestas y responde al cliente.
 
 **Sincronización:**
 
