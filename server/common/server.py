@@ -55,7 +55,7 @@ class Server:
                     break
 
         except OSError as e:
-            logging.info(f"action: receive_message | result: success | cantidad: {len(bets)}")
+            logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
         finally:
             client_sock.close()
 
