@@ -6,6 +6,7 @@ from common.serialize import *
 import multiprocessing
 from multiprocessing import Manager
 from time import sleep
+from threading import BrokenBarrierError
 
 class Server:
     def __init__(self, port, listen_backlog, cant_clientes):
@@ -100,6 +101,10 @@ class Server:
             if self._server_socket:
                 self._server_socket.close()
             logging.info("Server has been shutdown")
+    
+
+    def open_barrier(self):
+        self._barrier.abort()
 
 
 def handle_client_process(client_sock, client_id, lock_bets, barrier):
@@ -134,6 +139,10 @@ def handle_client_process(client_sock, client_id, lock_bets, barrier):
     except OSError as e:
         logging.info(f"action: receive_message | result: fail | cantidad: {len(bets)}")
         raise RuntimeError("Error receiving batch")
+    
+    except BrokenBarrierError as e:
+        logging.info("server closing | result: fail")
+        return
 
 
 def handle_post_batch_process(client_socket, lock_bets):

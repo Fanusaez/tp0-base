@@ -11,6 +11,7 @@ from functools import partial
 
 def handle_sigterm(server_instance, signum, frame):
     logging.info("Recibido SIGTERM. Cerrando servidor de manera controlada...")
+    server_instance.open_barrier()  # Abre la barrera para que los procesos hijos puedan terminar
     server_instance.shutdown()  # Método para cerrar conexiones y liberar recursos
 
 
