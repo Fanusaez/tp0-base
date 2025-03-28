@@ -28,7 +28,7 @@ type Bet struct {
 //	- 2 bytes: size of the bet	(each bet)
 //  - 2 bytes: size of the field (each field)
 //  - n bytes: field (each field)
-func ReadBetsFromCSV(filePath string, batchSize int, agencyId string) [][]Bet {
+func ReadBetsFromCSV(filePath string, batchSize int, agencyId string, out chan<- []Bet) {
 	file, err := os.Open(filePath)
 
 	if err != nil {
@@ -39,7 +39,6 @@ func ReadBetsFromCSV(filePath string, batchSize int, agencyId string) [][]Bet {
 	defer file.Close()
 
 	// all bets contains all the bets segmented into batchs
-	all_batches := [][]Bet{}
 	scanner := bufio.NewScanner(file)
 	
 	// The first 2 bytes are for the size of the batch
@@ -74,15 +73,15 @@ func ReadBetsFromCSV(filePath string, batchSize int, agencyId string) [][]Bet {
 			currentBatchBytes += betBytesSize
 			currentBatch = append(currentBatch, bet)
 		} else {
-			all_batches = append(all_batches, currentBatch)
+			out <- currentBatch
 			currentBatch = []Bet{bet}
 			currentBatchBytes = betBytesSize + ProtocolFieldLength
 		}
 	}
 	if len(currentBatch) > 0 {
-		all_batches = append(all_batches, currentBatch)
+		out <- currentBatch
 	}
-	return all_batches
+	close(out)
 }
 
 // Protocol:

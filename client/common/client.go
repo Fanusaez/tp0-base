@@ -67,7 +67,8 @@ func (c *Client) StartClientLoop() {
 		close(sigChan)
 	}()
 
-	var all_batches [][]Bet = ReadBetsFromCSV("/data/agency.csv", c.config.BatchMaxAmount, c.config.ID)
+	batchChan := make(chan []Bet)
+	go ReadBetsFromCSV("/data/agency.csv", c.config.BatchMaxAmount, c.config.ID, batchChan)
 
 	c.createClientSocket()
 
@@ -81,10 +82,10 @@ func (c *Client) StartClientLoop() {
 		return
 	}
 
-	for i := 0; i < len(all_batches); i++ {
+	for batch := range batchChan {
 
 		// Serialize the bet
-		var data_of_batch []byte = serializeBatch(all_batches[i])
+		var data_of_batch []byte = serializeBatch(batch)
 
 		// Send the bet
 		err := SendAll(c.conn, data_of_batch)
