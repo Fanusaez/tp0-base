@@ -12,7 +12,6 @@ from functools import partial
 def handle_sigterm(server_instance, signum, frame):
     logging.info("Recibido SIGTERM. Cerrando servidor de manera controlada...")
     server_instance.shutdown()  # Método para cerrar conexiones y liberar recursos
-    sys.exit(0)
 
 
 def initialize_config():

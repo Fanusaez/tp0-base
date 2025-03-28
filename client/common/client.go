@@ -65,7 +65,6 @@ func (c *Client) StartClientLoop() {
 		log.Infof("Recibido SIGTERM. Cerrando cliente de manera controlada...")
 		c.Close()
 		close(sigChan)
-		os.Exit(0)
 	}()
 
 	var all_batches [][]Bet = ReadBetsFromCSV("/data/agency.csv", c.config.BatchMaxAmount, c.config.ID)
